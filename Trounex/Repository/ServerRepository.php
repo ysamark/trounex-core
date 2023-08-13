@@ -4,10 +4,12 @@ namespace Trounex\Repository;
 
 use Closure;
 use App\Router;
+use Trounex\Helper;
 use App\Utils\Http\Request;
 use App\Utils\Http\Response;
 use App\Utils\PageExceptions\Error;
 use App\Controllers\BaseController;
+use Trounex\Helpers\FileUploadHelper;
 
 trait ServerRepository {
   /**
@@ -44,6 +46,20 @@ trait ServerRepository {
    * server global configs
    */
   private static $config = [];
+
+  /**
+   * @var array
+   *
+   * Config file types
+   *
+   * a map of file extensions related to the
+   * config file type handler
+   */
+  private static $configFileTypes = [
+    'php',
+    'json',
+    'txt'
+  ];
 
   /**
    * @var Closure
@@ -205,7 +221,7 @@ trait ServerRepository {
       }
     }
 
-    exit ("Page Not Found => " . $routeViewPath);
+    Error::Throw404 ();
   }
 
   public static function Get (string $property = null) {
@@ -253,7 +269,51 @@ trait ServerRepository {
 
   protected static function beforeAPIHandler () {
     self::beforeRenderOrAPIHandler ();
+
     $_SESSION ['_post'] = $_POST;
+
+    $fieldSources = isset ($_POST ['_source']) ? $_POST ['_source'] : [];
+
+    if (isset ($_FILES) && $_FILES) {
+      $pairedFileFieldProperties = [];
+
+      // echo '<pre>';
+      // print_r (['file' => $_FILES, 'source' => $fieldSources]);
+
+      foreach ($_FILES as $fileFieldProperty => $fileData) {
+        // $file = FileUploadHelper::UploadFile ([
+        //   'data' => $fileData
+        // ]);
+
+        // exit ($file->name);
+
+        foreach ($fieldSources as $fieldSourceKey => $fieldSourceValue) {
+          if (strtolower ($fileFieldProperty) === strtolower ($fieldSourceValue)) {
+            array_push ($pairedFileFieldProperties, $fileFieldProperty);
+
+            self::processFileField ($fileFieldProperty, $fileData, $fieldSourceKey);
+          }
+        }
+
+        if (!in_array ($fileFieldProperty, $pairedFileFieldProperties)) {
+          $fieldSourceKey = preg_replace ('/\-+/', '.', $fileFieldProperty);
+
+          self::processFileField ($fileFieldProperty, $fileData, $fieldSourceKey);
+        }
+      }
+    }
+  }
+
+  protected static function processFileField ($fileFieldProperty, $fileData, $fieldSourceKey) {
+    $_FILES [$fileFieldProperty] = [null];
+
+    $file = FileUploadHelper::UploadFile ([
+      'data' => $fileData
+    ]);
+
+    if (!$file->error) {
+      Helper::putPostData ($fieldSourceKey, $file->name);
+    }
   }
 
   protected static function beforeRender () {
@@ -492,9 +552,47 @@ trait ServerRepository {
   }
 
   /**
+   * @method mixed
+   */
+  protected static function handleTXTConfigFile (string $configFile) {
+    $configFileContent = trim (file_get_contents ($configFile));
+
+    return preg_replace ('/(\\\)$/', '', preg_replace ('/^(\\\)/', '', $configFileContent));
+  }
+
+  /**
+   * @method mixed
+   */
+  protected static function handlePHPConfigFile (string $configFile) {
+    return self::handleConfigFile ($configFile);
+  }
+
+  /**
+   * @method mixed
+   */
+  protected static function handleJSONConfigFile (string $configFile) {
+    $configFileContent = file_get_contents ($configFile);
+
+    $configFileData = json_decode (trim ($configFileContent));
+
+    return Helper::ObjectsToArray ($configFileData);
+  }
+
+  /**
+   * @method mixed
+   */
+  private static function handleConfigFile ($configFile) {
+    if (is_file ($configFile)) {
+      $configFileData = @require ($configFile);
+
+      return $configFileData;
+    }
+  }
+
+  /**
    * @method string
    */
-  protected static function getApplicationRootDir () {
+  public static function getApplicationRootDir () {
     $isRootDir = function ($dir) {
       return (boolean)(
         is_file ($dir . '/composer.json') &&
@@ -508,13 +606,11 @@ trait ServerRepository {
 
     for ( ; $rootDirFetchIntervalCount >= 0; $rootDirFetchIntervalCount--) {
       if (call_user_func_array ($isRootDir, [$currentDir])) {
-        break;
+        return $currentDir;
       }
 
       $currentDir = dirname ($currentDir);
     }
-
-    return $currentDir;
   }
 
   public static function lambda ($callback) {
@@ -611,38 +707,40 @@ trait ServerRepository {
       $config ['rootDir'], 'config'
     ]);
 
-    $configFileHandler = function ($configFile) {
-      if (is_file ($configFile)) {
-        $configFileData = @require ($configFile);
-
-        return $configFileData;
-      }
-    };
-
-    $configFilesRe = join (DIRECTORY_SEPARATOR, [
-      $configDirPath, '*.config.php'
-    ]);
-
     $mainConfigFilePath = join (DIRECTORY_SEPARATOR, [
       $configDirPath, 'index.php'
     ]);
 
-    $mainConfigFileData = call_user_func ($configFileHandler, $mainConfigFilePath);
+    $mainConfigFileData = self::handleConfigFile ($mainConfigFilePath);
 
     if (is_array ($mainConfigFileData)) {
       $config = array_merge ($config, $mainConfigFileData);
     }
 
-    $configFilePaths = glob ($configFilesRe);
+    foreach (self::$configFileTypes as $configFileType) {
+      $configFilesRe = join (DIRECTORY_SEPARATOR, [
+        $configDirPath, '*.config.' . $configFileType
+      ]);
 
-    foreach ($configFilePaths as $configFilePath) {
-      $configFileData = call_user_func ($configFileHandler, $configFilePath);
+      $configFilePaths = glob ($configFilesRe);
 
-      $configFileName = pathinfo ($configFilePath, PATHINFO_FILENAME);
+      foreach ($configFilePaths as $configFilePath) {
+        $configFileHandler = join ('', [
+          'handle', strtoupper ($configFileType), 'ConfigFile'
+        ]);
 
-      $configFileName = preg_replace ('/\.config$/i', '', $configFileName);
+        $configFileData = null; # self::handleConfigFile ($configFilePath);
 
-      $config [$configFileName] = $configFileData;
+        if (method_exists (self::class, $configFileHandler)) {
+          $configFileData = forward_static_call_array ([self::class, $configFileHandler], [realpath ($configFilePath)]);
+        }
+
+        $configFileName = pathinfo ($configFilePath, PATHINFO_FILENAME);
+
+        $configFileName = preg_replace ('/\.config$/i', '', $configFileName);
+
+        $config [$configFileName] = $configFileData;
+      }
     }
 
     /**

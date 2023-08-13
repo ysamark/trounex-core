@@ -1,10 +1,32 @@
 <?php
 
 function asset () {
-  $assetPath = join (DIRECTORY_SEPARATOR, [
+  $arguments = func_get_args ();
+
+  if (count ($arguments) >= 1) {
+    list ($firstArgument) = $arguments;
+
+    if (preg_match ('/^\.+\//', $firstArgument)) {
+      $backTrace = debug_backtrace ();
+
+      list ($firstTrace, $secondTrace) = $backTrace;
+
+      $traceBaseDir = dirname ($firstTrace ['file']);
+
+      if ($traceBaseDir === __DIR__) {
+        $traceBaseDir = dirname ($secondTrace ['file']);
+      }
+
+      $assetPath = join (DIRECTORY_SEPARATOR, array_merge (
+        [$traceBaseDir], $arguments
+      ));
+    }
+  }
+
+  $assetPath = isset ($assetPath) ? $assetPath : join (DIRECTORY_SEPARATOR, [
     App\Server::GetRootPath (),
     'assets',
-    join (DIRECTORY_SEPARATOR, func_get_args ())
+    join (DIRECTORY_SEPARATOR, $arguments)
   ]);
 
   $assetRenderTagListByExtension = [

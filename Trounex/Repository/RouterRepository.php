@@ -2,6 +2,8 @@
 
 namespace Trounex\Repository;
 
+use App\Router\Param;
+
 trait RouterRepository {
   /**
    * @method GetRoutesPath ($viewsPath)
@@ -32,7 +34,7 @@ trait RouterRepository {
       $routeParams [$routeParamKey] = $routeParamKeyValue;
     }
 
-    Router\Param::MapList ($routeParams);
+    Param::MapList ($routeParams);
 
     return $routeParams;
   }

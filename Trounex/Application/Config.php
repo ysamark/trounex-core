@@ -30,4 +30,12 @@ class Config {
 
     return isset ($this->props [$prop]) ? $this->props [$prop] : null;
   }
+
+  public function __isset (string $prop) {
+    if (is_object ($this->props)) {
+      return isset ($this->props->$prop);
+    }
+
+    return isset ($this->props [$prop]);
+  }
 }
