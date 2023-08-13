@@ -596,7 +596,7 @@ trait ServerRepository {
     $isRootDir = function ($dir) {
       return (boolean)(
         is_file ($dir . '/composer.json') &&
-        is_dir ($dir . '/vendor/ysamark/trounex/Trounex')
+        is_dir ($dir . '/vendor/ysamark/trounex-core/Trounex')
       );
     };
 
