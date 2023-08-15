@@ -10,10 +10,12 @@
   ],
   "autoload": {
     "psr-4": {
-      "Trounex\\": "Trounex/"
+      "Trounex\\": "Trounex/",
+      "App\\": "App/"
     },
     "psr-0": {
-      "Trounex\\": "Trounex/"
+      "Trounex\\": "Trounex/",
+      "App\\": "App/"
     },
     "files": [
       "autoload.php"
