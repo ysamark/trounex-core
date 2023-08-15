@@ -48,20 +48,6 @@ trait ServerRepository {
   private static $config = [];
 
   /**
-   * @var array
-   *
-   * Config file types
-   *
-   * a map of file extensions related to the
-   * config file type handler
-   */
-  private static $configFileTypes = [
-    'php',
-    'json',
-    'txt'
-  ];
-
-  /**
    * @var Closure
    */
   private static $include;
@@ -581,6 +567,16 @@ trait ServerRepository {
   /**
    * @method mixed
    */
+  protected static function handleYAMLConfigFile (string $configFile) {}
+
+  /**
+   * @method mixed
+   */
+  protected static function handleXMLConfigFile (string $configFile) {}
+
+  /**
+   * @method mixed
+   */
   private static function handleConfigFile ($configFile) {
     if (is_file ($configFile)) {
       $configFileData = @require ($configFile);
@@ -698,6 +694,31 @@ trait ServerRepository {
   }
 
   /**
+   * @method array
+   *
+   * Config file types
+   *
+   * a map of file extensions related to the
+   * config file type handler
+   */
+  public static function GetConfigFileTypes () {
+    $re = '/handle(.+)ConfigFile/i';
+    $classMethods = get_class_methods (self::class);
+
+    $configFileTypes = [];
+
+    foreach ($classMethods as $classMethod) {
+      if (preg_match ($re, $classMethod, $classMethodMatch)) {
+        $configFileType = strtolower ($classMethodMatch [1]);
+
+        array_push ($configFileTypes, $configFileType);
+      }
+    }
+
+    return $configFileTypes;
+  }
+
+  /**
    * @method void
    */
   public static function SetupConfigs (array $config = []) {
@@ -717,7 +738,7 @@ trait ServerRepository {
       $config = array_merge ($config, $mainConfigFileData);
     }
 
-    foreach (self::$configFileTypes as $configFileType) {
+    foreach (self::GetConfigFileTypes () as $configFileType) {
       $configFilesRe = join (DIRECTORY_SEPARATOR, [
         $configDirPath, '*.config.' . $configFileType
       ]);
