@@ -739,6 +739,10 @@ trait ServerRepository {
 
         $configFileName = preg_replace ('/\.config$/i', '', $configFileName);
 
+        if (isset ($config [$configFileName]) && is_array ($config [$configFileName]) && is_array ($configFileData)) {
+          $configFileData = array_full_merge ($config [$configFileName], $configFileData);
+        }
+
         $config [$configFileName] = $configFileData;
       }
     }
