@@ -45,6 +45,7 @@
     "doctrine/dbal": "^2.1.5",
     "shuchkin/simplexlsx": "dev-master",
     "symfony/http-client": "5.4.x-dev",
+    "php-module/array-full-merge": "dev-main",
     "rakit/validation": "dev-master",
     "ramsey/uuid": "4.2.3",
     "symfony/http-foundation": "5.4.x-dev",
