@@ -19,13 +19,13 @@ function conf ($props = null) {
   foreach ($propKeyMap as $index => $propKey) {
     if (is_object ($config) && isset ($config->$propKey)) {
       if ($index >= $propKeyMapLastIndex) {
-        return $config->$propKey;
+        return Config::ReadConfigValue ($config->$propKey);
       }
 
       $config = $config->$propKey;
     } elseif (is_array ($config) && isset ($config [$propKey])) {
       if ($index >= $propKeyMapLastIndex) {
-        return $config [$propKey];
+        return Config::ReadConfigValue ($config [$propKey]);
       }
 
       $config = $config [$propKey];
