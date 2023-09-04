@@ -412,36 +412,47 @@ trait ServerRepository {
       return self::$viewLayout;
     }
 
+    $viewsExtensions = conf ('viewEngine.options.extensions');
+    $viewsRootDir = conf ('viewEngine.options.rootDir');
+
     $layoutsDirPath = self::GetLayoutsPath ();
-    $viewsDirPathRe = self::path2regex(self::GetViewsPath ());
+    $viewsDirPathRe = self::path2regex ($viewsRootDir);
 
     $viewPath = self::GetViewPath ();
+
+    if (!is_array ($viewsExtensions)) {
+      $viewsExtensions = [];
+    }
 
     $viewLayoutRelativePath = preg_replace("/^($viewsDirPathRe)(\\/|\\\\)*/i", '', $viewPath);
 
     $viewLayoutRelativePathSlices = preg_split('/(\/|\\\\)+/', $viewLayoutRelativePath);
 
-    for ($i = 0; $i < count($viewLayoutRelativePathSlices); $i++) {
-      $viewLayoutRelativePath = dirname($viewLayoutRelativePath);
+    foreach ($viewsExtensions as $viewsExtension) {
+      $viewLayoutRelativePathSlicesLen = count ($viewLayoutRelativePathSlices);
 
-      $viewLayoutAbsolutePath = join(DIRECTORY_SEPARATOR, [
-        $layoutsDirPath, join('.', [$viewLayoutRelativePath, 'php'])
+      for ($i = 0; $i < count ($viewLayoutRelativePathSlices); $i++) {
+        $viewLayoutRelativePath = dirname ($viewLayoutRelativePath);
+
+        $viewLayoutAbsolutePath = join (DIRECTORY_SEPARATOR, [
+          $layoutsDirPath, join ('.', [$viewLayoutRelativePath, $viewsExtension])
+        ]);
+
+        if (is_file ($viewLayoutAbsolutePath)) {
+          return $viewLayoutAbsolutePath;
+        }
+      }
+
+      $viewLayoutAbsolutePath = join (DIRECTORY_SEPARATOR, [
+        $layoutsDirPath, "app.$viewsExtension"
       ]);
 
-      if (is_file($viewLayoutAbsolutePath)) {
-        return $viewLayoutAbsolutePath;
+      if (!is_file ($viewLayoutAbsolutePath)) {
+        exit ('Could not load main layout');
       }
+
+      return $viewLayoutAbsolutePath;
     }
-
-    $viewLayoutAbsolutePath = join(DIRECTORY_SEPARATOR, [
-      $layoutsDirPath, 'app.php'
-    ]);
-
-    if (!is_file($viewLayoutAbsolutePath)) {
-      exit ('Could not load main layout');
-    }
-
-    return $viewLayoutAbsolutePath;
   }
 
   /**
@@ -674,9 +685,7 @@ trait ServerRepository {
    * get the view layouts path
    */
   public static function GetLayoutsPath () {
-    $rootDir = self::GetRootPath ();
-
-    return realpath($rootDir . '/layouts');
+    return realpath (conf ('viewEngine.options.layoutsPath'));
   }
 
   /**
