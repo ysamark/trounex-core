@@ -65,6 +65,15 @@ class Config {
       return $newConfigValue;
     }
 
+    if (is_array ($configValue)) {
+      /**
+       * Map each property to read it as a single reference
+       */
+      foreach ($configValue as $property => $value) {
+        $configValue [$property] = self::ReadConfigValue ($value);
+      }
+    }
+
     return $configValue;
   }
 }
