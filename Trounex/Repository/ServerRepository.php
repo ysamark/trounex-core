@@ -686,7 +686,9 @@ trait ServerRepository {
    * get the view layouts path
    */
   public static function GetLayoutsPath () {
-    $layoutsDirPath = conf ('${rootDir}/layouts');
+    $layoutsDirPath = join (DIRECTORY_SEPARATOR, [
+      conf ('rootDir'), 'layouts'
+    ]);
 
     try {
       $layoutsDirPath = conf ('viewEngine.options.layoutsDir');
