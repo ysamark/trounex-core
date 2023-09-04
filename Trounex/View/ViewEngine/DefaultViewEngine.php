@@ -2,6 +2,8 @@
 
 namespace Trounex\View\ViewEngine;
 
+use Closure;
+
 class DefaultViewEngine extends ViewEngine {
   /**
    * @method void
