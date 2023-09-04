@@ -28,7 +28,7 @@ class Config {
       return self::ReadConfigValue ($this->props->$prop);
     }
 
-    return isset ($this->props [$prop]) ? $this->props [$prop] : null;
+    return isset ($this->props [$prop]) ? self::ReadConfigValue ($this->props [$prop]) : null;
   }
 
   public function __isset (string $prop) {
