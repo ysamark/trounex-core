@@ -111,18 +111,36 @@ trait ServerRepository {
     self::$include = function ($__view) {
       $global = new ViewGlobalContext ($this);
 
-      $vars = $global->getAllProps ();
+      $viewEngine = 'Default';
+      $viewEngineResolveAlternates = [
+        // conf()
+        'viewEngine',
+        'viewEngine.resolve'
+      ];
 
-      foreach ($vars as $key => $var) {
-        $varName = is_array ($var) ? $var ['name'] : $key;
-        $value = is_array ($var) ? $var ['value'] : $vars [$key];
+      foreach ($viewEngineResolveAlternates as $viewEngineResolveAlternate) {
+        $viewEngineResolveAlternate = conf ($viewEngineResolveAlternate);
 
-        if (preg_match ('/^([a-zA-Z0-9_]+)$/', $varName)) {
-          $$varName = $value;
+        if (is_string ($viewEngineResolveAlternate)) {
+          $viewEngine = ucfirst($viewEngineResolveAlternate);
+          break;
         }
       }
 
-      include ($__view ['path']);
+      $viewEngineAdapterClassName = "Trounex\\View\\ViewEngine\\{$viewEngine }ViewEngine";
+
+      if (class_exists ($viewEngineAdapterClassName)) {
+        $viewEngineAdapterProps = [
+          'context' => $global,
+          'viewFilePath' => $__view ['path']
+        ];
+
+        $viewEngineAdapterHandlerArguments = [$global];
+
+        $viewEngineAdapter = new $viewEngineAdapterClassName ($viewEngineAdapterProps);
+
+        return call_user_func_array ([$viewEngineAdapter, 'render'], $viewEngineAdapterHandlerArguments);
+      }
     };
 
     $actionMethod = 'handler';
