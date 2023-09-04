@@ -3,6 +3,7 @@
 namespace Trounex\Repository;
 
 use Closure;
+use Exception;
 use App\Router;
 use Trounex\Helper;
 use App\Utils\Http\Request;
@@ -431,7 +432,7 @@ trait ServerRepository {
     foreach ($viewsExtensions as $viewsExtension) {
       $viewLayoutRelativePathSlicesLen = count ($viewLayoutRelativePathSlices);
 
-      for ($i = 0; $i < count ($viewLayoutRelativePathSlices); $i++) {
+      for ($i = 0; $i < $viewLayoutRelativePathSlicesLen; $i++) {
         $viewLayoutRelativePath = dirname ($viewLayoutRelativePath);
 
         $viewLayoutAbsolutePath = join (DIRECTORY_SEPARATOR, [
@@ -447,12 +448,12 @@ trait ServerRepository {
         $layoutsDirPath, "app.$viewsExtension"
       ]);
 
-      if (!is_file ($viewLayoutAbsolutePath)) {
-        exit ('Could not load main layout');
+      if (is_file ($viewLayoutAbsolutePath)) {
+        return $viewLayoutAbsolutePath;
       }
-
-      return $viewLayoutAbsolutePath;
     }
+
+    exit ("Could not load main layout");
   }
 
   /**
@@ -685,7 +686,15 @@ trait ServerRepository {
    * get the view layouts path
    */
   public static function GetLayoutsPath () {
-    return realpath (conf ('viewEngine.options.layoutsPath'));
+    $layoutsDirPath = conf ('${rootDir}/layouts');
+
+    try {
+      $layoutsDirPath = conf ('viewEngine.options.layoutsDir');
+    }
+    catch (Exception $e) {}
+    catch (NoConfigPropertyException $e) {}
+
+    return realpath ($layoutsDirPath);
   }
 
   /**
