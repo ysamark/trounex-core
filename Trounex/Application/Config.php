@@ -31,6 +31,18 @@ class Config {
     return isset ($this->props [$prop]) ? self::ReadConfigValue ($this->props [$prop]) : null;
   }
 
+  public function __set (string $prop, $value = null) {
+    if (is_object ($this->props)) {
+      $this->props->$prop = $value;
+
+      return $this->props->$prop;
+    }
+
+    $this->props [$prop] = $value;
+
+    return $this->props [$prop];
+  }
+
   public function __isset (string $prop) {
     if (is_object ($this->props)) {
       return isset ($this->props->$prop);
