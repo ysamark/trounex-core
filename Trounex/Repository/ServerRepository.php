@@ -9,6 +9,7 @@ use App\Utils\Http\Request;
 use App\Utils\Http\Response;
 use App\Utils\PageExceptions\Error;
 use App\Controllers\BaseController;
+use Trounex\View\ViewGlobalContext;
 use Trounex\Helpers\FileUploadHelper;
 
 trait ServerRepository {
@@ -108,11 +109,9 @@ trait ServerRepository {
     $routeViewPathAlternates = array_filter ($routeViewPathAlternates, $routeViewPathAlternatesFilter);
 
     self::$include = function ($__view) {
-      $vars = get_object_vars ($this);
+      $global = new ViewGlobalContext ($this);
 
-      if (BaseController::isControllerInstance ($this)) {
-        $vars = $this->getProps ();
-      }
+      $vars = $global->getAllProps ();
 
       foreach ($vars as $key => $var) {
         $varName = is_array ($var) ? $var ['name'] : $key;
