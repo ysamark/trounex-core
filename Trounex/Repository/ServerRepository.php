@@ -86,10 +86,26 @@ trait ServerRepository {
       }
     }
 
-    $routeViewPathAlternates = [
-      "$viewsPath/{$routePath}.php",
-      "$viewsPath/$routePath/index.php"
-    ];
+    $viewsExtensions = conf ('viewEngine.options.extensions');
+    $viewsRootDir = conf ('viewEngine.options.rootDir');
+
+    $routeViewPathAlternates = [];
+
+    $routeViewPathAlternatesFilter = function ($routeViewPathAlternate) {
+      return (boolean)($routeViewPathAlternate);
+    };
+
+    foreach ($viewsExtensions as $viewsExtension) {
+      $routeViewPathAlternates = array_merge (
+        $routeViewPathAlternates,
+        [
+          realpath ("$viewsRootDir/{$routePath}.$viewsExtension"),
+          realpath ("$viewsRootDir/$routePath/index.$viewsExtension")
+        ]
+      );
+    }
+
+    $routeViewPathAlternates = array_filter ($routeViewPathAlternates, $routeViewPathAlternatesFilter);
 
     self::$include = function ($__view) {
       $vars = get_object_vars ($this);
@@ -137,7 +153,7 @@ trait ServerRepository {
     }
 
     foreach ($routeViewPathAlternates as $routeViewPath) {
-      if (is_file ($routeViewPath)) {
+      if ($routeViewPath && is_file ($routeViewPath)) {
         self::setViewPath (realpath ($routeViewPath));
 
         self::beforeRender ();
