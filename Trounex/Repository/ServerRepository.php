@@ -412,8 +412,8 @@ trait ServerRepository {
       return self::$viewLayout;
     }
 
-    $layoutsDirPath = self::GetLayoutsPath();
-    $viewsDirPathRe = self::path2regex(self::GetViewsPath());
+    $layoutsDirPath = self::GetLayoutsPath ();
+    $viewsDirPathRe = self::path2regex(self::GetViewsPath ());
 
     $viewPath = self::GetViewPath ();
 
