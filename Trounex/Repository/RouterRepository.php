@@ -2,7 +2,9 @@
 
 namespace Trounex\Repository;
 
+use Exception;
 use App\Router\Param;
+use Trounex\Exceptions\NoConfigPropertyException;
 
 trait RouterRepository {
   /**
@@ -49,6 +51,22 @@ trait RouterRepository {
     $fileList = [];
     $directoryFileList = self::readDir ($directoryPathRe);
     $routeParamRe = '/\\[([^\\]]+)\\]/';
+
+    $defaultRouterValidFileExtensions = ['php'];
+    $routerValidFileExtensions = [];
+
+    try {
+      $routerValidFileExtensions = conf ('viewEngine.options.extensions');
+    }
+    catch (NoConfigPropertyException $e) {}
+    catch (Exception $e) {}
+
+    if (is_array ($routerValidFileExtensions)) {
+      $routerValidFileExtensions = array_merge ($routerValidFileExtensions, $defaultRouterValidFileExtensions);
+    } else {
+      $routerValidFileExtensions = $defaultRouterValidFileExtensions;
+    }
+
 
     foreach ($directoryFileList as $directoryFile) {
       if (is_dir ($directoryFile)) {

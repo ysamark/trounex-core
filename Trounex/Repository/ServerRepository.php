@@ -105,7 +105,7 @@ trait ServerRepository {
       $viewsExtensions = array_merge ($viewsExtensions, $defaultViewsExtensions);
     }
 
-    if (is_string ($viewsRootDir)) {
+    if (!is_string ($viewsRootDir)) {
       $viewsRootDir = '';
     }
 
@@ -198,14 +198,14 @@ trait ServerRepository {
       return self::serveStaticFile ($publicFilePath);
     }
 
-    $dynamicRoutesPaths = Router::GetRoutesPath ($viewsPath);
+    $dynamicRoutesPaths = Router::GetRoutesPath ($viewsRootDir);
 
-    $routeViewPathBase = preg_replace ('/[\/\\\]/', DIRECTORY_SEPARATOR, "$viewsPath{$routePath}");
+    $routeViewPathBase = preg_replace ('/[\/\\\]/', DIRECTORY_SEPARATOR, "$viewsRootDir{$routePath}");
 
     $routeViewPaths = [];
 
     foreach ($viewsExtensions as $viewsExtension) {
-      array_push ($routeViewPaths, [
+      $routeViewPaths = array_merge ($routeViewPaths, [
         $routeViewPathBase . DIRECTORY_SEPARATOR . 'index.' . $requestMethod . ".$viewsExtension",
         $routeViewPathBase . '.' . $requestMethod . ".$viewsExtension",
         $routeViewPathBase . DIRECTORY_SEPARATOR . "index.$viewsExtension",
