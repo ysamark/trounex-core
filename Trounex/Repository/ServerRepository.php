@@ -198,7 +198,10 @@ trait ServerRepository {
       return self::serveStaticFile ($publicFilePath);
     }
 
-    $dynamicRoutesPaths = Router::GetRoutesPath ($viewsRootDir);
+    $dynamicRoutesPaths = array_merge (
+      Router::GetRoutesPath ($viewsRootDir),
+      Router::GetRoutesPath ("$viewsPath/api")
+    );
 
     $routeViewPathBase = preg_replace ('/[\/\\\]/', DIRECTORY_SEPARATOR, "$viewsRootDir{$routePath}");
 
