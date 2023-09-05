@@ -198,22 +198,35 @@ trait ServerRepository {
       return self::serveStaticFile ($publicFilePath);
     }
 
-    $dynamicRoutesPaths = array_merge (
-      Router::GetRoutesPath ($viewsRootDir),
-      Router::GetRoutesPath ("$viewsPath/api")
-    );
+    if (preg_match ('/^\/api\/?/i', $routePath)) {
+      $dynamicRoutesPaths = Router::GetRoutesPath ("$viewsPath/api");
+    } else {
+      $dynamicRoutesPaths = Router::GetRoutesPath ($viewsPath);
+    }
 
-    $routeViewPathBase = preg_replace ('/[\/\\\]/', DIRECTORY_SEPARATOR, "$viewsRootDir{$routePath}");
+    $routeViewPathRoot = preg_replace ('/[\/\\\]/', DIRECTORY_SEPARATOR, "$viewsRootDir{$routePath}");
+    $routeViewPathBase = preg_replace ('/[\/\\\]/', DIRECTORY_SEPARATOR, "$viewsPath{$routePath}");
 
     $routeViewPaths = [];
 
     foreach ($viewsExtensions as $viewsExtension) {
-      $routeViewPaths = array_merge ($routeViewPaths, [
-        $routeViewPathBase . DIRECTORY_SEPARATOR . 'index.' . $requestMethod . ".$viewsExtension",
-        $routeViewPathBase . '.' . $requestMethod . ".$viewsExtension",
-        $routeViewPathBase . DIRECTORY_SEPARATOR . "index.$viewsExtension",
-        $routeViewPathBase . ".$viewsExtension"
-      ]);
+      $routeViewPathExtensionMatch = [
+        $routeViewPathRoot . DIRECTORY_SEPARATOR . 'index.' . $requestMethod . ".$viewsExtension",
+        $routeViewPathRoot . '.' . $requestMethod . ".$viewsExtension",
+        $routeViewPathRoot . DIRECTORY_SEPARATOR . "index.$viewsExtension",
+        $routeViewPathRoot . ".$viewsExtension"
+      ];
+
+      if (preg_match ('/^\/api\/?/i', $routePath)) {
+        $routeViewPathExtensionMatch = [
+          $routeViewPathBase . DIRECTORY_SEPARATOR . 'index.' . $requestMethod . ".$viewsExtension",
+          $routeViewPathBase . '.' . $requestMethod . ".$viewsExtension",
+          $routeViewPathBase . DIRECTORY_SEPARATOR . "index.$viewsExtension",
+          $routeViewPathBase . ".$viewsExtension"
+        ];
+      }
+
+      $routeViewPaths = array_merge ($routeViewPaths, $routeViewPathExtensionMatch);
     }
 
     $dynamicRoutes = [];
