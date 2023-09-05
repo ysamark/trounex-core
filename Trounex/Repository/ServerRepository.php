@@ -12,6 +12,7 @@ use App\Utils\PageExceptions\Error;
 use App\Controllers\BaseController;
 use Trounex\View\ViewGlobalContext;
 use Trounex\Helpers\FileUploadHelper;
+use Trounex\Exceptions\NoConfigPropertyException;
 
 trait ServerRepository {
   /**
@@ -88,6 +89,7 @@ trait ServerRepository {
       }
     }
 
+    $defaultViewsExtensions = ['php'];
     $viewsExtensions = conf ('viewEngine.options.extensions');
     $viewsRootDir = conf ('viewEngine.options.rootDir');
 
@@ -96,6 +98,16 @@ trait ServerRepository {
     $routeViewPathAlternatesFilter = function ($routeViewPathAlternate) {
       return (boolean)($routeViewPathAlternate);
     };
+
+    if (!is_array ($viewsExtensions)) {
+      $viewsExtensions = $defaultViewsExtensions;
+    } else {
+      $viewsExtensions = array_merge ($viewsExtensions, $defaultViewsExtensions);
+    }
+
+    if (is_string ($viewsRootDir)) {
+      $viewsRootDir = '';
+    }
 
     foreach ($viewsExtensions as $viewsExtension) {
       $routeViewPathAlternates = array_merge (
@@ -190,12 +202,16 @@ trait ServerRepository {
 
     $routeViewPathBase = preg_replace ('/[\/\\\]/', DIRECTORY_SEPARATOR, "$viewsPath{$routePath}");
 
-    $routeViewPaths = [
-      $routeViewPathBase . DIRECTORY_SEPARATOR . 'index.' . $requestMethod . '.php',
-      $routeViewPathBase . '.' . $requestMethod . '.php',
-      $routeViewPathBase . DIRECTORY_SEPARATOR . 'index.php',
-      $routeViewPathBase . '.php'
-    ];
+    $routeViewPaths = [];
+
+    foreach ($viewsExtensions as $viewsExtension) {
+      array_push ($routeViewPaths, [
+        $routeViewPathBase . DIRECTORY_SEPARATOR . 'index.' . $requestMethod . ".$viewsExtension",
+        $routeViewPathBase . '.' . $requestMethod . ".$viewsExtension",
+        $routeViewPathBase . DIRECTORY_SEPARATOR . "index.$viewsExtension",
+        $routeViewPathBase . ".$viewsExtension"
+      ]);
+    }
 
     $dynamicRoutes = [];
 
