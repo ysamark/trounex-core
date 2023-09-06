@@ -1,34 +1,67 @@
 <?php
+/**
+ * @version 2.0
+ * @author Sammy
+ *
+ * @keywords Samils, ils, php framework
+ * -----------------
+ * @package Sammy\Packs\Samils\Capsule\MarkDown
+ * - Autoload, application dependencies
+ *
+ * MIT License
+ *
+ * Copyright (c) 2020 Ysare
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
+ */
 
 use App\Server;
 
-function extend_layout (string $viewLayoutRelativePath, Closure $viewHandler) {
-  $viewLayoutRelativePath = preg_replace('/(\.php)$/i', '', $viewLayoutRelativePath);
-  $relativePathRe = '/^((\.)+\/)/';
+if (!function_exists ('extend_layout')) {
+  function extend_layout (string $viewLayoutRelativePath, Closure $viewHandler) {
+    $viewLayoutRelativePath = preg_replace('/(\.php)$/i', '', $viewLayoutRelativePath);
+    $relativePathRe = '/^((\.)+\/)/';
 
-  $viewLayoutBasePath = Server::GetLayoutsPath ();
+    $viewLayoutBasePath = Server::GetLayoutsPath ();
 
-  if (preg_match ($relativePathRe, $viewLayoutRelativePath)) {
-    $backTrace = debug_backtrace ();
+    if (preg_match ($relativePathRe, $viewLayoutRelativePath)) {
+      $backTrace = debug_backtrace ();
 
-    if (isset ($backTrace[0]) && is_array ($backTrace[0]) && isset ($backTrace[0]['file'])) {
-      $viewLayoutBasePath = dirname ($backTrace[0]['file']);
+      if (isset ($backTrace[0]) && is_array ($backTrace[0]) && isset ($backTrace[0]['file'])) {
+        $viewLayoutBasePath = dirname ($backTrace[0]['file']);
+      }
     }
-  }
-  
-  $viewLayoutAbsolutePath = join (DIRECTORY_SEPARATOR, [
-    $viewLayoutBasePath, join('.', [
-      $viewLayoutRelativePath, 'php'
-    ])
-  ]);
 
-  if (!is_file ($viewLayoutAbsolutePath)) {
-    exit ('Trounex Error :: Could not extend layout ' . $viewLayoutRelativePath);
-  }
+    $viewLayoutAbsolutePath = join (DIRECTORY_SEPARATOR, [
+      $viewLayoutBasePath, join('.', [
+        $viewLayoutRelativePath, 'php'
+      ])
+    ]);
 
-  Server::LoadView ($viewLayoutAbsolutePath, [
-    'viewHandler' => Server::lambda ($viewHandler),
-    'layout' => $viewLayoutRelativePath,
-    'layoutPath' => realpath($viewLayoutAbsolutePath)
-  ]);
+    if (!is_file ($viewLayoutAbsolutePath)) {
+      exit ('Trounex Error :: Could not extend layout ' . $viewLayoutRelativePath);
+    }
+
+    Server::LoadView ($viewLayoutAbsolutePath, [
+      'viewHandler' => Server::lambda ($viewHandler),
+      'layout' => $viewLayoutRelativePath,
+      'layoutPath' => realpath($viewLayoutAbsolutePath)
+    ]);
+  }
 }
