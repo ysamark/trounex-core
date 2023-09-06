@@ -74,13 +74,14 @@ if (!function_exists ('path')) {
     }
     */
 
+    $serverRequestUri = isset ($_SERVER ['REQUEST_URI']) ? $_SERVER ['REQUEST_URI'] : '/';
     $path = empty ($path) ? '/' : $path;
 
     if (!preg_match ('/^(\/)/', $path)) {
       $initialPath = join ('/', [
         '',
         $stripInitialAndFinalBar (
-          preg_replace ('/\?(.*)$/', '', $_SERVER ['REQUEST_URI'])
+          preg_replace ('/\?(.*)$/', '', $serverRequestUri)
         )
       ]);
 
