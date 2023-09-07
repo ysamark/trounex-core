@@ -189,7 +189,12 @@ trait ServerRepository {
 
         self::beforeRender ();
 
-        call_user_func_array (self::lambda (self::$include), [['path' => self::mainLayoutView ()]]);
+        call_user_func_array (self::lambda (self::$include), [
+          [
+            'layoutPath' => self::mainLayoutView (),
+            'viewPath' => self::GetViewPath ()
+          ]
+        ]);
 
         exit (0);
       }
