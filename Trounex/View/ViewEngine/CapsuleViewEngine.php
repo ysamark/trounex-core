@@ -50,6 +50,7 @@ class CapsuleViewEngine extends ViewEngine {
       $this->viewFilePath,
       [
         'viewsDir' => $viewEngineManager->viewsDir,
+        'layoutDir' => $this->layoutFilePath,
         'template' => $this->viewFilePath,
         'layout' => 'app',
         'action' => '${ action }',
