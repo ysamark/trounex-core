@@ -26,6 +26,6 @@ class DefaultViewEngine extends ViewEngine {
 
     $renderScope = Closure::bind ($renderScopeFunc, $this->context, get_class ($this->context));
 
-    call_user_func_array ($renderScope, [$this->viewFilePath]);
+    call_user_func_array ($renderScope, [$this->layoutFilePath]);
   }
 }

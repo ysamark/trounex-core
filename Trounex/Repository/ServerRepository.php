@@ -121,7 +121,7 @@ trait ServerRepository {
 
     $routeViewPathAlternates = array_filter ($routeViewPathAlternates, $routeViewPathAlternatesFilter);
 
-    self::$include = function ($__view) {
+    self::$include = function ($__props) {
       $global = new ViewGlobalContext ($this);
 
       $viewEngine = 'Default';
@@ -145,7 +145,8 @@ trait ServerRepository {
       if (class_exists ($viewEngineAdapterClassName)) {
         $viewEngineAdapterProps = [
           'context' => $global,
-          'viewFilePath' => $__view ['path']
+          'viewFilePath' => $__props ['viewPath'],
+          'layoutFilePath' => $__props ['layoutPath']
         ];
 
         $viewEngineAdapterHandlerArguments = [$global];
@@ -294,7 +295,10 @@ trait ServerRepository {
 
   public static function LoadView (string $viewFilePath, array $viewProps = []) {
     $includeLambda = self::lambda (self::$include);
-    $includeLambdaProps = array_merge ($viewProps, ['path' => $viewFilePath]);
+    $includeLambdaProps = array_merge ($viewProps, [
+      'layoutPath' => $viewFilePath,
+      'viewPath' => self::GetViewPath ()
+    ]);
 
     return call_user_func_array ($includeLambda, [$includeLambdaProps]);
   }
