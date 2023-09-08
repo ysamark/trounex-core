@@ -4,6 +4,7 @@ namespace Trounex\View\ViewEngine;
 
 use Sammy\Packs\Capsule;
 use Sammy\Packs\ViewEngine as ViewEngineManager;
+use Sammy\Packs\Samils\Capsule\CapsuleGlobalContext;
 
 class CapsuleViewEngine extends ViewEngine {
   /**
@@ -34,6 +35,8 @@ class CapsuleViewEngine extends ViewEngine {
     ]);
 
     $viewEngineManager->start ($viewEngineManagerOptions);
+
+    CapsuleGlobalContext::addProvider ($this->context, get_class ($this->context));
 
     // [
     //   ${ view_path },
