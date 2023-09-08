@@ -89,21 +89,14 @@ trait ServerRepository {
       }
     }
 
-    $defaultViewsExtensions = ['php'];
-    $viewsExtensions = conf ('viewEngine.options.extensions');
-    $viewsRootDir = conf ('viewEngine.options.rootDir');
+    $viewsExtensions = self::GetViewsFileExtensions ();
+    $viewsRootDir = self::GetViewsRootDir ();
 
     $routeViewPathAlternates = [];
 
     $routeViewPathAlternatesFilter = function ($routeViewPathAlternate) {
       return (boolean)($routeViewPathAlternate);
     };
-
-    if (!is_array ($viewsExtensions)) {
-      $viewsExtensions = $defaultViewsExtensions;
-    } else {
-      $viewsExtensions = array_merge ($viewsExtensions, $defaultViewsExtensions);
-    }
 
     if (!is_string ($viewsRootDir)) {
       $viewsRootDir = '';
@@ -274,7 +267,7 @@ trait ServerRepository {
 
           $match [-1 + count($match)] = self::stripRouteVerb($match [-1 + count($match)]);
 
-          self::handleRoute($index, $route, $routeViewPath, $routePath, $match, self::$include);
+          self::handleRoute ($index, $route, $routeViewPath, $routePath, $match, self::$include);
         }
       }
     }
@@ -383,9 +376,7 @@ trait ServerRepository {
 
     $viewPath = self::GetViewPath ();
 
-    $viewControllerPath = join ('', [
-      preg_replace ('/(\.php)$/', '.controller.php', $viewPath)
-    ]);
+    $viewControllerPath = self::GetViewControllerPath ($viewPath);
 
     if (is_file ($viewControllerPath)) {
       $viewControllerInstance = require ($viewControllerPath);
@@ -610,7 +601,7 @@ trait ServerRepository {
       self::beforeRender ();
 
       // return call_user_func_array (self::lambda ($callback), [['path' => self::mainLayoutView ()]]);
-      return self::LoadView(self::mainLayoutView ());
+      return self::LoadView (self::mainLayoutView ());
     }
 
     exit (0);
@@ -708,6 +699,81 @@ trait ServerRepository {
   }
 
   /**
+   * get views extensions list ordered from longer
+   * to shorter by dots division
+   */
+  protected static function orderViewsExtensionsList ($viewsExtensions = null) {
+    if (is_null ($viewsExtensions)) {
+      $viewsExtensions = self::GetViewsFileExtensions ();
+    }
+
+    $longerExtension = '';
+    $longerExtensionIndex = -1;
+
+    $getStrDotsLen = function ($string) {
+      if (is_string ($string)) {
+        $strSplit = preg_split ('/\\./', $string);
+
+        return -1 + count ($strSplit);
+      }
+
+      return -1;
+    };
+
+    foreach ($viewsExtensions as $viewsExtensionIndex => $viewsExtension) {
+      $viewsExtensionDotsLen = $getStrDotsLen ($viewsExtension);
+      $longerExtensionDotsLen = $getStrDotsLen ($longerExtension);
+
+      if ($longerExtensionIndex < 0 || $viewsExtensionDotsLen > $longerExtensionDotsLen) {
+        $longerExtension = $viewsExtension;
+        $longerExtensionIndex = $viewsExtensionIndex;
+      }
+    }
+
+    if ($longerExtensionIndex >= 0) {
+      array_splice ($viewsExtensions, $longerExtensionIndex, 1);
+
+      $orderedList = array_merge ([$longerExtension], self::orderViewsExtensionsList ($viewsExtensions));
+
+      return $orderedList;
+    }
+
+    return $viewsExtensions;
+  }
+
+  /**
+   * get view controller file path
+   */
+  public static function GetViewControllerPath (string $viewPath) {
+    /**
+     * @var array
+     *
+     * order the views file extensions from
+     * longer to shorter according to dots
+     * division
+     */
+    $orderedViewsExtensions = self::orderViewsExtensionsList ();
+
+    $viewsDir = self::GetViewsPath ();
+    $viewsRootDirRe = self::path2regex (self::GetViewsRootDir ());
+    $viewsRootDirRe = "/^($viewsRootDirRe)/";
+
+    if (preg_match ($viewsRootDirRe, $viewPath)) {
+      $viewAbsolutePath = preg_replace ($viewsRootDirRe, $viewsDir, $viewPath);
+
+      foreach ($orderedViewsExtensions as $viewsExtension) {
+        $viewsExtensionRe = join ('', ['/(', self::path2regex ($viewsExtension), ')$/']);
+
+        if (preg_match ($viewsExtensionRe, $viewAbsolutePath)) {
+          $viewControllerFileName = preg_replace ($viewsExtensionRe, 'controller.php', $viewAbsolutePath);
+
+          return $viewControllerFileName;
+        }
+      }
+    }
+  }
+
+  /**
    * get the view path
    */
   public static function GetViewPath () {
@@ -720,7 +786,36 @@ trait ServerRepository {
   public static function GetViewsPath () {
     $rootDir = self::GetRootPath ();
 
-    return realpath($rootDir . '/views');
+    return realpath ($rootDir . '/views');
+  }
+
+  /**
+   * get views root directory
+   */
+  public static function GetViewsRootDir () {
+    $configViewsRootDir = conf ('viewEngine.options.rootDir');
+
+    if (is_string ($configViewsRootDir) && is_dir ($configViewsRootDir)) {
+      return realpath ($configViewsRootDir);
+    }
+
+    return self::GetViewsPath ();
+  }
+
+  /**
+   * get views valid file extensions
+   */
+  public static function GetViewsFileExtensions () {
+    $defaultViewsFileExtensions = [
+      'php'
+    ];
+    $viewsFileExtensions = conf ('viewEngine.options.extensions');
+
+    if (is_array ($viewsFileExtensions)) {
+      return array_merge ($viewsFileExtensions, $defaultViewsFileExtensions);
+    }
+
+    return $defaultViewsFileExtensions;
   }
 
   /**
