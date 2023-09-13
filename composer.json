@@ -50,9 +50,7 @@
     "ramsey/uuid": "4.2.3",
     "symfony/http-foundation": "5.4.x-dev",
     "fusionspim/php-password-checker": "2.0.3",
-    "php_modules/view-engine": "dev-main",
     "php_modules/capsule": "dev-main",
-    "php_modules/core": "dev-main",
-    "php_modules/application-server-view-engine-manager": "dev-main"
+    "php_modules/core": "dev-main"
   }
 }
