@@ -3,7 +3,7 @@
 namespace Trounex\View\ViewEngine;
 
 use Sammy\Packs\Capsule;
-use Sammy\Packs\ViewEngine as ViewEngineManager;
+// use Sammy\Packs\ViewEngine as ViewEngineManager;
 use Sammy\Packs\Samils\Capsule\CapsuleGlobalContext;
 
 class CapsuleViewEngine extends ViewEngine {
@@ -11,7 +11,7 @@ class CapsuleViewEngine extends ViewEngine {
    * @method void
    */
   public function render () {
-    $viewEngineManager = new ViewEngineManager ();
+    // $viewEngineManager = new ViewEngineManager ();
 
     $defaultViewEngineOptions = [
       'rootDir' => null,
@@ -28,13 +28,13 @@ class CapsuleViewEngine extends ViewEngine {
       $viewEngineOptions = array_merge ($defaultViewEngineOptions, $viewEngineOptions);
     }
 
-    $viewEngineManagerOptions = array_merge ($viewEngineOptions, [
-      'view-engine' => 'capsule/capsule',
-      'viewsDir' => $viewEngineOptions ['rootDir'],
-      'file_extensions' => $viewEngineOptions ['extensions']
-    ]);
+    // $viewEngineManagerOptions = array_merge ($viewEngineOptions, [
+    //   'view-engine' => 'capsule/capsule',
+    //   'viewsDir' => ,
+    //   'file_extensions' => $viewEngineOptions ['extensions']
+    // ]);
 
-    $viewEngineManager->start ($viewEngineManagerOptions);
+    // $viewEngineManager->start ($viewEngineManagerOptions);
 
     CapsuleGlobalContext::addProvider ($this->context, get_class ($this->context));
 
@@ -52,7 +52,7 @@ class CapsuleViewEngine extends ViewEngine {
     Capsule::RenderDOM (
       $this->viewFilePath,
       [
-        'viewsDir' => $viewEngineManager->viewsDir,
+        'viewsDir' => $viewEngineOptions ['rootDir'],
         'layoutDir' => $this->layoutFilePath,
         'template' => $this->viewFilePath,
         'layout' => 'app',
