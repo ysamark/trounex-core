@@ -11,10 +11,14 @@ use App\Utils\Http\Response;
 use App\Utils\PageExceptions\Error;
 use App\Controllers\BaseController;
 use Trounex\View\ViewGlobalContext;
-use Trounex\Helpers\FileUploadHelper;
 use Trounex\Exceptions\NoConfigPropertyException;
 
 trait ServerRepository {
+  use ServerRepository\ServerGetters;
+  use ServerRepository\ServerConfigs;
+  use ServerRepository\ServerUploads;
+  use ServerRepository\ServerMiddlewares;
+
   /**
    * @var string
    */
@@ -275,22 +279,6 @@ trait ServerRepository {
     Error::Throw404 ();
   }
 
-  public static function Get (string $property = null) {
-    $propertyMap = [
-      'port' => 'SERVER_PORT'
-    ];
-
-    if (isset ($propertyMap [$property])) {
-      $propertyLoader = $propertyMap [$property];
-
-      if (is_string ($propertyLoader)) {
-        return isset ($_SERVER [$propertyLoader]) ? $_SERVER [$propertyLoader] : null;
-      } elseif ($propertyLoader instanceof \Closure) {
-        return call_user_func_array ($propertyLoader, [$property]);
-      }
-    }
-  }
-
   public static function LoadView (string $viewFilePath, array $viewProps = []) {
     $includeLambda = self::lambda (self::$include);
     $includeLambdaProps = array_merge ($viewProps, [
@@ -319,117 +307,6 @@ trait ServerRepository {
         }
       }
     }
-  }
-
-  protected static function beforeAPIHandler () {
-    self::beforeRenderOrAPIHandler ();
-
-    $_SESSION ['_post'] = $_POST;
-
-    $fieldSources = isset ($_POST ['_source']) ? $_POST ['_source'] : [];
-
-    if (isset ($_FILES) && $_FILES) {
-      $pairedFileFieldProperties = [];
-
-      // echo '<pre>';
-      // print_r (['file' => $_FILES, 'source' => $fieldSources]);
-
-      foreach ($_FILES as $fileFieldProperty => $fileData) {
-        // $file = FileUploadHelper::UploadFile ([
-        //   'data' => $fileData
-        // ]);
-
-        // exit ($file->name);
-
-        foreach ($fieldSources as $fieldSourceKey => $fieldSourceValue) {
-          if (strtolower ($fileFieldProperty) === strtolower ($fieldSourceValue)) {
-            array_push ($pairedFileFieldProperties, $fileFieldProperty);
-
-            self::processFileField ($fileFieldProperty, $fileData, $fieldSourceKey);
-          }
-        }
-
-        if (!in_array ($fileFieldProperty, $pairedFileFieldProperties)) {
-          $fieldSourceKey = preg_replace ('/\-+/', '.', $fileFieldProperty);
-
-          self::processFileField ($fileFieldProperty, $fileData, $fieldSourceKey);
-        }
-      }
-    }
-  }
-
-  protected static function processFileField ($fileFieldProperty, $fileData, $fieldSourceKey) {
-    $_FILES [$fileFieldProperty] = [null];
-
-    $file = FileUploadHelper::UploadFile ([
-      'data' => $fileData
-    ]);
-
-    if (!$file->error) {
-      Helper::putPostData ($fieldSourceKey, $file->name);
-    }
-  }
-
-  protected static function beforeRender () {
-    self::beforeRenderOrAPIHandler ();
-    register_shutdown_function ('App\Utils\ShutDownFunction');
-
-    $viewPath = self::GetViewPath ();
-
-    $viewControllerPath = self::GetViewControllerPath ($viewPath);
-
-    if (is_file ($viewControllerPath)) {
-      $viewControllerInstance = require ($viewControllerPath);
-
-      if (is_callable ($viewControllerInstance) && $viewControllerInstance instanceof Closure) {
-        #self::$viewGlobalContext = $viewControllerInstance;
-        return call_user_func_array (self::lambda ($viewControllerInstance), self::defaultHandlerArguments ());
-      } elseif (is_object ($viewControllerInstance) && method_exists ($viewControllerInstance, 'handler')) {
-        self::$viewGlobalContext = $viewControllerInstance;
-        call_user_func_array ([$viewControllerInstance, 'handler'], self::defaultHandlerArguments ());
-      }
-    }
-  }
-
-  protected static function beforeRenderOrAPIHandler () {
-    $viewPath = dirname (self::GetViewPath ());
-
-    # Run middlewares
-    # $middlewaresList = [];
-
-    $viewPathSlices = preg_split ('/(\/|\\\)+/', $viewPath);
-    $viewPathSlicesCount = count ($viewPathSlices);
-
-    for ($i = 0; $i < $viewPathSlicesCount; $i++) {
-      $viewMiddlewarePath = join (DIRECTORY_SEPARATOR, [
-        $viewPath,
-        pathinfo ($viewPath, PATHINFO_FILENAME) . '.middleware.php'
-      ]);
-
-      if (is_null (self::$viewLayout)) {
-        $viewLayoutPath = join (DIRECTORY_SEPARATOR, [
-          $viewPath,
-          pathinfo ($viewPath, PATHINFO_FILENAME) . '.layout.php'
-        ]);
-
-        if (is_file ($viewLayoutPath)) {
-          self::$viewLayout = $viewLayoutPath;
-        }
-      }
-
-      if (is_file ($viewMiddlewarePath)) {
-        $viewMiddlewareInstance = require ($viewMiddlewarePath);
-
-        if (is_callable ($viewMiddlewareInstance) && $viewMiddlewareInstance instanceof Closure) {
-          call_user_func_array (self::lambda ($viewMiddlewareInstance), self::defaultHandlerArguments ());
-        } elseif (is_object ($viewMiddlewareInstance) && method_exists ($viewMiddlewareInstance, 'handler')) {
-          call_user_func_array ([$viewMiddlewareInstance, 'handler'], self::defaultHandlerArguments ());
-        }
-      }
-
-      $viewPath = dirname ($viewPath);
-    }
-    # End
   }
 
   protected static function isAPIRoutePath ($routePath) {
@@ -623,69 +500,6 @@ trait ServerRepository {
     return preg_replace ('/(\\\)$/', '', preg_replace ('/^(\\\)/', '', $configFileContent));
   }
 
-  /**
-   * @method mixed
-   */
-  protected static function handlePHPConfigFile (string $configFile) {
-    return self::handleConfigFile ($configFile);
-  }
-
-  /**
-   * @method mixed
-   */
-  protected static function handleJSONConfigFile (string $configFile) {
-    $configFileContent = file_get_contents ($configFile);
-
-    $configFileData = json_decode (trim ($configFileContent));
-
-    return Helper::ObjectsToArray ($configFileData);
-  }
-
-  /**
-   * @method mixed
-   */
-  protected static function handleYAMLConfigFile (string $configFile) {}
-
-  /**
-   * @method mixed
-   */
-  protected static function handleXMLConfigFile (string $configFile) {}
-
-  /**
-   * @method mixed
-   */
-  private static function handleConfigFile ($configFile) {
-    if (is_file ($configFile)) {
-      $configFileData = @require ($configFile);
-
-      return $configFileData;
-    }
-  }
-
-  /**
-   * @method string
-   */
-  public static function getApplicationRootDir () {
-    $isRootDir = function ($dir) {
-      return (boolean)(
-        is_file ($dir . '/composer.json') &&
-        is_dir ($dir . '/vendor/ysamark/trounex-core/Trounex')
-      );
-    };
-
-    $currentDir = dirname (__DIR__);
-
-    $rootDirFetchIntervalCount = count (preg_split ('/(\/|\\\\)/', $currentDir));
-
-    for ( ; $rootDirFetchIntervalCount >= 0; $rootDirFetchIntervalCount--) {
-      if (call_user_func_array ($isRootDir, [$currentDir])) {
-        return $currentDir;
-      }
-
-      $currentDir = dirname ($currentDir);
-    }
-  }
-
   public static function lambda ($callback) {
     if (!($callback instanceof Closure)) {
       return;
@@ -774,85 +588,9 @@ trait ServerRepository {
   }
 
   /**
-   * get the view path
-   */
-  public static function GetViewPath () {
-    return self::$viewPath;
-  }
-
-  /**
-   * get the views path
-   */
-  public static function GetViewsPath () {
-    $rootDir = self::GetRootPath ();
-
-    return realpath ($rootDir . '/views');
-  }
-
-  /**
-   * get views root directory
-   */
-  public static function GetViewsRootDir () {
-    $configViewsRootDir = conf ('viewEngine.options.rootDir');
-
-    if (is_string ($configViewsRootDir) && is_dir ($configViewsRootDir)) {
-      return realpath ($configViewsRootDir);
-    }
-
-    return self::GetViewsPath ();
-  }
-
-  /**
-   * get views valid file extensions
-   */
-  public static function GetViewsFileExtensions () {
-    $defaultViewsFileExtensions = [
-      'php'
-    ];
-    $viewsFileExtensions = conf ('viewEngine.options.extensions');
-
-    if (is_array ($viewsFileExtensions)) {
-      return array_merge ($viewsFileExtensions, $defaultViewsFileExtensions);
-    }
-
-    return $defaultViewsFileExtensions;
-  }
-
-  /**
-   * get the view layouts path
-   */
-  public static function GetLayoutsPath () {
-    $layoutsDirPath = join (DIRECTORY_SEPARATOR, [
-      conf ('rootDir'), 'layouts'
-    ]);
-
-    try {
-      $layoutsDirPath = conf ('viewEngine.options.layoutsDir');
-    }
-    catch (Exception $e) {}
-    catch (NoConfigPropertyException $e) {}
-
-    return realpath ($layoutsDirPath);
-  }
-
-  /**
-   * get the public path
-   */
-  public static function GetPublicPath () {
-    $rootDir = self::GetRootPath ();
-
-    return realpath($rootDir . '/public');
-  }
-
-  /**
-   * get the root path
-   */
-  public static function GetRootPath () {
-    return isset (self::$config ['rootDir']) ? realpath (self::$config ['rootDir']) : '/';
-  }
-
-  /**
+   * @method void
    *
+   * set server router path prefix
    */
   public static function SetPathPrefix ($pathPrefix = null) {
     self::PathPrefix ($pathPrefix);
@@ -872,115 +610,7 @@ trait ServerRepository {
     }
 
     if (isset (self::$pathPrefix ['text'])) {
-      // $port = self::Get ('port');
-
-      // if (in_array ((int)($port), [80])) {
-      //   return '/as';
-      // }
-
       return trim (self::$pathPrefix ['text']);
     }
-  }
-
-  /**
-   * @method array
-   *
-   * Config file types
-   *
-   * a map of file extensions related to the
-   * config file type handler
-   */
-  public static function GetConfigFileTypes () {
-    $re = '/handle(.+)ConfigFile/i';
-    $classMethods = get_class_methods (self::class);
-
-    $configFileTypes = [];
-
-    foreach ($classMethods as $classMethod) {
-      if (preg_match ($re, $classMethod, $classMethodMatch)) {
-        $configFileType = strtolower ($classMethodMatch [1]);
-
-        array_push ($configFileTypes, $configFileType);
-      }
-    }
-
-    return $configFileTypes;
-  }
-
-  /**
-   * @method void
-   */
-  public static function SetupConfigs (array $config = []) {
-    $config ['rootDir'] = self::getApplicationRootDir ();
-
-    $configDirPath = join (DIRECTORY_SEPARATOR, [
-      $config ['rootDir'], 'config'
-    ]);
-
-    $mainConfigFilePath = join (DIRECTORY_SEPARATOR, [
-      $configDirPath, 'index.php'
-    ]);
-
-    $mainConfigFileData = self::handleConfigFile ($mainConfigFilePath);
-
-    if (is_array ($mainConfigFileData)) {
-      $config = array_merge ($config, $mainConfigFileData);
-    }
-
-    foreach (self::GetConfigFileTypes () as $configFileType) {
-      $configFilesRe = join (DIRECTORY_SEPARATOR, [
-        $configDirPath, '*.config.' . $configFileType
-      ]);
-
-      $configFilePaths = glob ($configFilesRe);
-
-      foreach ($configFilePaths as $configFilePath) {
-        $configFileHandler = join ('', [
-          'handle', strtoupper ($configFileType), 'ConfigFile'
-        ]);
-
-        $configFileData = null; # self::handleConfigFile ($configFilePath);
-
-        if (method_exists (self::class, $configFileHandler)) {
-          $configFileData = forward_static_call_array ([self::class, $configFileHandler], [realpath ($configFilePath)]);
-        }
-
-        $configFileName = pathinfo ($configFilePath, PATHINFO_FILENAME);
-
-        $configFileName = preg_replace ('/\.config$/i', '', $configFileName);
-
-        if (isset ($config [$configFileName]) && is_array ($config [$configFileName]) && is_array ($configFileData)) {
-          $configFileData = array_full_merge ($config [$configFileName], $configFileData);
-        }
-
-        $config [$configFileName] = $configFileData;
-      }
-    }
-
-    /**
-     * Set whole the config data to the app global config
-     */
-    foreach ($config as $prop => $value) {
-      $configPropSetterName = "Set$prop";
-
-      if (method_exists (self::class, $configPropSetterName)) {
-        forward_static_call_array ([self::class, $configPropSetterName], [$value]);
-      } else {
-        self::$config [$prop] = $value;
-      }
-    }
-  }
-
-  /**
-   * @method array
-   *
-   * Get all the server config data
-   */
-  public function GetConfigs () {
-    if (!self::$config) {
-      self::SetupConfigs ();
-    }
-
-    return self::$config;
   }
 }
