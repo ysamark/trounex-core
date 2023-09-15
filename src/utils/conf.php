@@ -31,6 +31,7 @@
  * SOFTWARE.
  */
 
+use App\Server;
 use Trounex\Application\Config;
 
 if (!function_exists ('conf')) {
@@ -49,21 +50,31 @@ if (!function_exists ('conf')) {
     $propKeyMapLastIndex = -1 + count ($propKeyMap);
 
     foreach ($propKeyMap as $index => $propKey) {
+
       if (is_object ($config) && isset ($config->$propKey)) {
+
         if ($index >= $propKeyMapLastIndex) {
-          return Config::ReadConfigValue ($config->$propKey);
+          $configValue = Config::ReadConfigValue ($config->$propKey);
+          break;
         }
 
         $config = $config->$propKey;
       } elseif (is_array ($config) && isset ($config [$propKey])) {
+
         if ($index >= $propKeyMapLastIndex) {
-          return Config::ReadConfigValue ($config [$propKey]);
+          $configValue = Config::ReadConfigValue ($config [$propKey]);
+          break;
         }
 
         $config = $config [$propKey];
-      } else {
-        throw new Exception ('TypeError: type of config('.gettype($config).') property does not support nested keys');
       }
+    }
+
+    if (isset ($configValue)) {
+
+      Server::updateServerConfigProperty ($props, $configValue);
+
+      return $configValue;
     }
   }
 }

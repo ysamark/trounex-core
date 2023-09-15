@@ -25,10 +25,10 @@ class Config {
 
   public function __get (string $prop) {
     if (is_object ($this->props) && isset ($this->props->$prop)) {
-      return self::ReadConfigValue ($this->props->$prop);
+      return ($this->props->$prop);
     }
 
-    return isset ($this->props [$prop]) ? self::ReadConfigValue ($this->props [$prop]) : null;
+    return isset ($this->props [$prop]) ? ($this->props [$prop]) : null;
   }
 
   public function __set (string $prop, $value = null) {

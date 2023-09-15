@@ -68,4 +68,37 @@ trait ServerConfigs {
       }
     }
   }
+
+  /**
+   * @method array
+   */
+  public static function updateServerConfigProperty (sting $propertyKey, $propertyValue = null) {
+    $configArrayPropMap = [];
+
+    $propertyKeySlices = preg_split ('/\.+/', $propertyKey);
+
+    $lastIndex = -1 + count ($propertyKeySlices);
+
+    for ($i = $lastIndex; $i >= 0; $i--) {
+      $propertyKeySlice = $propertyKeySlices [$i];
+      # verify if this is the last array item
+      if ($i >= $lastIndex) {
+        $configArrayPropMap = [
+          $propertyKeySlice => $propertyValue
+        ];
+      } else {
+        $configArrayPropMap = [
+          $propertyKeySlice => $configArrayPropMap
+        ];
+      }
+    }
+
+    self::$config = array_full_merge (self::$config, $configArrayPropMap);
+
+    // echo '<pre>';
+    // print_r ($configArrayPropMap);
+    // echo '</pre>';
+
+    return $configArrayPropMap;
+  }
 }
