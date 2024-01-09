@@ -56,23 +56,11 @@ if (!function_exists ('path')) {
     }
 
     $path = join ('/', $pathList);
+    $initialDotRe = '/^\.(\/)[^\.]/';
 
-    if (preg_match ($re = '/^\.(\/)[^\.]/', $path)) {
-      $path = preg_replace ($re, '', $path);
+    if (preg_match ($initialDotRe, $path)) {
+      $path = preg_replace ($initialDotRe, '', $path);
     }
-
-    /*
-    if (preg_match ($re = '/^(\.{2}(\/))+/', $path, $match)) {
-      $initialPath = $stripInitialAndFinalBar (
-        preg_replace ('/\?(.*)$/', '', $_SERVER ['REQUEST_URI'])
-      );
-
-      echo '<pre>';
-      print_r ($match);
-
-      exit (0);
-    }
-    */
 
     $serverRequestUri = isset ($_SERVER ['REQUEST_URI']) ? $_SERVER ['REQUEST_URI'] : '/';
     $path = empty ($path) ? '/' : $path;
@@ -100,11 +88,13 @@ if (!function_exists ('path')) {
       return $initialPath;
     }
 
-    return join ('', [
+    $finalPath = join ('', [
       '/',
-      $stripInitialAndFinalBar ($serverPathPrefix),
+      call_user_func ($stripInitialAndFinalBar, $serverPathPrefix),
       '/',
-      $stripInitialAndFinalBar (preg_replace ('/^\/+/', '/', $path))
+      call_user_func ($stripInitialAndFinalBar, preg_replace ('/^\/+/', '/', $path))
     ]);
+
+    return preg_replace ('/(\/{2,})/', '/', $finalPath);
   }
 }

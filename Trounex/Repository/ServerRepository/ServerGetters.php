@@ -6,18 +6,31 @@ trait ServerGetters {
   /**
    * @method mixed
    */
-  public static function Get (string $property = null) {
+  public static function Get (string $propertyKey = null) {
     $propertyMap = [
       'port' => 'SERVER_PORT'
     ];
 
-    if (isset ($propertyMap [$property])) {
-      $propertyLoader = $propertyMap [$property];
+    $propertyKeyAlternates = [
+      $propertyKey,
+      strtoupper ('$propertyKey'),
+      join ('_', ['SERVER', strtoupper ($propertyKey)]),
+      join ('_', ['REQUEST', strtoupper ($propertyKey)])
+    ];
 
-      if (is_string ($propertyLoader)) {
-        return isset ($_SERVER [$propertyLoader]) ? $_SERVER [$propertyLoader] : null;
-      } elseif ($propertyLoader instanceof \Closure) {
-        return call_user_func_array ($propertyLoader, [$property]);
+    foreach ($propertyKeyAlternates as $property) {
+      if (isset ($propertyMap [$property])) {
+        $propertyLoader = $propertyMap [$property];
+
+        if (is_string ($propertyLoader)) {
+          return isset ($_SERVER [$propertyLoader]) ? $_SERVER [$propertyLoader] : null;
+        } elseif ($propertyLoader instanceof \Closure) {
+          return call_user_func_array ($propertyLoader, [$property]);
+        }
+      }
+
+      if (isset ($_SERVER [$property])) {
+        return $_SERVER [$property];
       }
     }
   }
@@ -154,7 +167,7 @@ trait ServerGetters {
    *
    * Get all the server config data
    */
-  public function GetConfigs () {
+  public static function GetConfigs () {
     if (!self::$config) {
       self::SetupConfigs ();
     }

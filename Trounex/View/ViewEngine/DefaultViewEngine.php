@@ -3,29 +3,44 @@
 namespace Trounex\View\ViewEngine;
 
 use Closure;
+use App\View;
+use App\Server;
+use Trounex\Helper;
+use Trounex\View\ViewHandler;
+use Trounex\View\ViewHandlerStack;
 
 class DefaultViewEngine extends ViewEngine {
+  private function registerViewHandlers ($layoutFilePath) {
+    $n = count (preg_split ('/(\\\|\/)+/', $layoutFilePath));
+
+    for ($i = 0; $i < $n; $i++) {
+
+      $viewHandler = $this->viewHandlerFactory ($layoutFilePath);
+
+      ViewHandlerStack::push ($viewHandler);
+
+      if (Server::isRootLayout ($layoutFilePath)) {
+        break;
+      }
+
+      $layoutFilePath = Server::getLayoutParent ($layoutFilePath);
+    }
+  }
+
+  private function viewHandlerFactory (string $layoutFilePath) {
+    $vars = [];
+
+    return new ViewHandler (function () use ($layoutFilePath, $vars) {
+      include ($layoutFilePath);
+    });
+  }
+
   /**
    * @method void
    */
   public function render () {
-    $renderScopeFunc = function (string $__viewFileName) {
-      $vars = $this->getAllProps ();
+    $viewHandlers = $this->registerViewHandlers ($this->layoutFilePath);
 
-      foreach ($vars as $key => $var) {
-        $varName = is_array ($var) ? $var ['name'] : $key;
-        $value = is_array ($var) ? $var ['value'] : $vars [$key];
-
-        if (preg_match ('/^([a-zA-Z0-9_]+)$/', $varName)) {
-          $$varName = $value;
-        }
-      }
-
-      include ($__viewFileName);
-    };
-
-    $renderScope = Closure::bind ($renderScopeFunc, $this->context, get_class ($this->context));
-
-    call_user_func_array ($renderScope, [$this->layoutFilePath]);
+    View::Render ();
   }
 }

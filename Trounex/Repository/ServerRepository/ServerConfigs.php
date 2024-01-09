@@ -72,7 +72,7 @@ trait ServerConfigs {
   /**
    * @method array
    */
-  public static function updateServerConfigProperty (sting $propertyKey, $propertyValue = null) {
+  public static function updateServerConfigProperty (string $propertyKey, $propertyValue = null) {
     $configArrayPropMap = [];
 
     $propertyKeySlices = preg_split ('/\.+/', $propertyKey);

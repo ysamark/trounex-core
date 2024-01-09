@@ -52,6 +52,8 @@ trait RouterRepository {
     $directoryFileList = self::readDir ($directoryPathRe);
     $routeParamRe = '/\\[([^\\]]+)\\]/';
 
+    $routeContextRe = '/\\(([^\\)]+)\\)/';
+
     $defaultRouterValidFileExtensions = ['php'];
     $routerValidFileExtensions = [];
 
@@ -71,20 +73,23 @@ trait RouterRepository {
     foreach ($directoryFileList as $directoryFile) {
       if (is_dir ($directoryFile)) {
         $fileList = array_merge ($fileList, self::getDirectoryFileList ($directoryFile));
-      } elseif (in_array (pathinfo ($directoryFile, PATHINFO_EXTENSION), ['php']) &&
-        preg_match_all ($routeParamRe, $directoryFile, $match)) {
+      } elseif (in_array (pathinfo ($directoryFile, PATHINFO_EXTENSION), ['php'])) {
+
+        preg_match_all ($routeParamRe, $directoryFile, $routeParamMatch);
 
         $directoryFile = realpath ($directoryFile);
+        $routeRePath = $directoryFile;
+
+        if (preg_match ($routeContextRe, $directoryFile)) {
+          $routeRePath = preg_replace ('/((\/|\\\){2,})/', DIRECTORY_SEPARATOR, preg_replace ($routeContextRe, '', $directoryFile));
+        }
 
         $routeData = [
           'originalFilePath' => $directoryFile,
-          'routeRe' => self::routePathRe ($directoryFile),
-          'match' => $match
+          'routeRe' => self::routePathRe ($routeRePath),
+          'match' => $routeParamMatch
         ];
 
-        // echo "<pre>";
-        // print_r($routeData);
-        // echo "</pre>";
         array_push ($fileList, $routeData);
       }
     }

@@ -66,10 +66,10 @@ trait ServerMiddlewares {
     $viewPathSlicesCount = count ($viewPathSlices);
 
     for ($i = 0; $i < $viewPathSlicesCount; $i++) {
-      $viewMiddlewarePath = join (DIRECTORY_SEPARATOR, [
-        $viewPath,
-        pathinfo ($viewPath, PATHINFO_FILENAME) . '.middleware.php'
-      ]);
+      $viewMiddlewarePaths = [
+        pathinfo ($viewPath, PATHINFO_FILENAME) . '.middleware.php',
+        '@middleware.php'
+      ];
 
       if (is_null (self::$viewLayout)) {
         $viewLayoutPath = join (DIRECTORY_SEPARATOR, [
@@ -82,13 +82,19 @@ trait ServerMiddlewares {
         }
       }
 
-      if (is_file ($viewMiddlewarePath)) {
-        $viewMiddlewareInstance = require ($viewMiddlewarePath);
+      foreach ($viewMiddlewarePaths as $viewMiddlewarePath) {
+        $viewMiddlewarePath = join (DIRECTORY_SEPARATOR, [
+          $viewPath, $viewMiddlewarePath
+        ]);
 
-        if (is_callable ($viewMiddlewareInstance) && $viewMiddlewareInstance instanceof Closure) {
-          call_user_func_array (self::lambda ($viewMiddlewareInstance), self::defaultHandlerArguments ());
-        } elseif (is_object ($viewMiddlewareInstance) && method_exists ($viewMiddlewareInstance, 'handler')) {
-          call_user_func_array ([$viewMiddlewareInstance, 'handler'], self::defaultHandlerArguments ());
+        if (is_file ($viewMiddlewarePath)) {
+          $viewMiddlewareInstance = require ($viewMiddlewarePath);
+
+          if (is_callable ($viewMiddlewareInstance) && $viewMiddlewareInstance instanceof Closure) {
+            call_user_func_array (self::lambda ($viewMiddlewareInstance), self::defaultHandlerArguments ());
+          } elseif (is_object ($viewMiddlewareInstance) && method_exists ($viewMiddlewareInstance, 'handler')) {
+            call_user_func_array ([$viewMiddlewareInstance, 'handler'], self::defaultHandlerArguments ());
+          }
         }
       }
 

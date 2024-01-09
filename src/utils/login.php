@@ -30,27 +30,10 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
+use Trounex\Auth;
 
-use App\Models\User;
-
-if (!function_exists ('logged_in_user')) {
-  function logged_in_user () {
-    if (!(isset ($_SESSION)
-      && is_array ($_SESSION)
-      && isset ($_SESSION ['user'])
-      && is_array ($_SESSION ['user'])
-      && isset ($_SESSION ['user']['id']))) {
-      return false;
-    }
-
-    $userId = (int)($_SESSION ['user']['id']);
-
-    $userFetch = User::where ([ 'id' => $userId ]);
-
-    if ($userFetch->count () >= 1) {
-      return $userFetch->first ();
-    }
-
-    return false;
+if (!function_exists ('login')) {
+  function login () {
+    return forward_static_call_array ([Auth::class, 'attempt'], func_get_args ());
   }
 }

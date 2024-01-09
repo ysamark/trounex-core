@@ -2,6 +2,8 @@
 
 namespace Trounex;
 
+use App\Server;
+
 class Helper {
   /**
    * @method array
@@ -113,5 +115,46 @@ class Helper {
 
   public static function getModuleRootDir () {
     return dirname (__DIR__);
+  }
+
+  public static function isFileLocatedIn (string $dir, string $filePath) {
+    $slashRe = '/(\\\|\/)+/';
+
+    if (!(is_dir ($dir) && is_file ($filePath))) {
+      return false;
+    }
+
+    $dirSlices = preg_split ($slashRe, $dir);
+    $filePathSlices = preg_split ($slashRe, $filePath);
+
+
+    return (realpath (join (DIRECTORY_SEPARATOR, array_slice ($filePathSlices, 0, count ($dirSlices)))) === realpath ($dir));
+  }
+
+  public static function isFileLocatedInLayoutsDir (string $filePath) {
+    return self::isFileLocatedIn (Server::GetLayoutsPath (), $filePath);
+  }
+
+  public static function getArrayProp (array $array, string $propRef, $defaultValue = null) {
+    $propRefSlices = preg_split ('/\.+/', $propRef);
+    $propRefSlicesLen = count ($propRefSlices);
+
+    for ($i = 0; $i < (-1 + $propRefSlicesLen); $i++) {
+      $propRefSlice = $propRefSlices [$i];
+
+      if (!(isset ($array [$propRefSlice]) && is_array ($array [$propRefSlice]))) {
+        return $defaultValue;
+      }
+
+      $array = $array [$propRefSlice];
+    }
+
+    $lastPropRefSlice = $propRefSlices [-1 + $propRefSlicesLen];
+
+    if (isset ($array [$lastPropRefSlice])) {
+      return $array [$lastPropRefSlice];
+    }
+
+    return $defaultValue;
   }
 }

@@ -54,7 +54,7 @@ if (!function_exists ('conf')) {
       if (is_object ($config) && isset ($config->$propKey)) {
 
         if ($index >= $propKeyMapLastIndex) {
-          $configValue = Config::ReadConfigValue ($config->$propKey);
+          $configValue = Config::ReadConfigValue ($config->$propKey, $props);
           break;
         }
 
@@ -62,7 +62,7 @@ if (!function_exists ('conf')) {
       } elseif (is_array ($config) && isset ($config [$propKey])) {
 
         if ($index >= $propKeyMapLastIndex) {
-          $configValue = Config::ReadConfigValue ($config [$propKey]);
+          $configValue = Config::ReadConfigValue ($config [$propKey], $props);
           break;
         }
 

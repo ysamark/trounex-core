@@ -2,7 +2,7 @@
 
 namespace Trounex\Repository\Database;
 
-use App\Database\Database;
+use App\Database;
 use Illuminate\Database\Capsule\Manager;
 // use Doctrine\DBAL\Types\{StringType, Type};
 

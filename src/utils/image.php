@@ -54,6 +54,10 @@ if (!function_exists ('image')) {
         $imageFileContent = file_get_contents ($imagePath);
         $imageFileExtension = pathinfo ($imagePath, PATHINFO_EXTENSION);
 
+        if (in_array ($imageFileExtension, ['svg'])) {
+          return $imageFileContent;
+        }
+
         return join (',', [
           'data:image/'.$imageFileExtension.';base64',
           base64_encode ($imageFileContent)

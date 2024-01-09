@@ -8,7 +8,7 @@ class Image extends Rule {
   /**
    * @var string
    */
-  protected $message = ':attribute musts to be a valid image file';
+  protected $message = ':attribute musts to be a valid and supported image file';
 
   /**
    * @var array
@@ -19,8 +19,6 @@ class Image extends Rule {
    * @method boolean
    */
   public function check ($value): bool {
-
-    // echo '<pre>'; print_r ([func_get_args(), $this->getParameters ()]);
 
     $imageAbsolutePath = join (DIRECTORY_SEPARATOR, [
       conf('paths.tmpUploadsPath'), $value
@@ -38,10 +36,29 @@ class Image extends Rule {
       return true;
     }
 
-    $acceptedImageExtensionsList = preg_split ('/\s*;+\s*/', strtolower ($imageExtensionsList));
+    $acceptedImageExtensionsList = preg_split ('/\s*;+\s*/', strtoupper (trim ($imageExtensionsList)));
 
     $imageExtensionsMap = [
-      2 => 'jpeg'
+      // 2 => 'jpeg'
+      IMAGETYPE_GIF => 'GIF',
+      IMAGETYPE_JPEG => 'JPEG',
+      IMAGETYPE_PNG => 'PNG',
+      IMAGETYPE_SWF => 'SWF',
+      IMAGETYPE_PSD => 'PSD',
+      IMAGETYPE_BMP => 'BMP',
+      IMAGETYPE_TIFF_II => 'TIFF_II',
+      IMAGETYPE_TIFF_MM => 'TIFF_MM',
+      IMAGETYPE_JPC => 'JPC',
+      IMAGETYPE_JP2 => 'JP2',
+      IMAGETYPE_JPX => 'JPX',
+      IMAGETYPE_JB2 => 'JB2',
+      IMAGETYPE_SWC => 'SWC',
+      IMAGETYPE_IFF => 'IFF',
+      IMAGETYPE_WBMP => 'WBMP',
+      IMAGETYPE_XBM => 'XBM',
+      IMAGETYPE_ICO => 'ICO',
+      IMAGETYPE_WEBP => 'WEBP',
+      IMAGETYPE_AVIF => 'AVIF',
     ];
 
     $imageTypeName = isset ($imageExtensionsMap [$imageType]) ? $imageExtensionsMap [$imageType] : null;

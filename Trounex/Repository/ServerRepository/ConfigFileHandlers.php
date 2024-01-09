@@ -7,6 +7,7 @@ trait ConfigFileHandlers {
   use ConfigFileHandlers\JsonConfigFileHandler;
   use ConfigFileHandlers\YamlConfigFileHandler;
   use ConfigFileHandlers\XmlConfigFileHandler;
+  use ConfigFileHandlers\TxtConfigFileHandler;
 
   /**
    * @method mixed

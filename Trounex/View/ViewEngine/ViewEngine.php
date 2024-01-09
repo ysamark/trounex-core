@@ -30,6 +30,12 @@ abstract class ViewEngine {
     return ($this->props && isset ($this->props [$property]));
   }
 
+  public function updateLayoutFilePath ($layoutFilePath) {
+    if (is_file ($layoutFilePath)) {
+      $this->props ['layoutFilePath'] = $layoutFilePath;
+    }
+  }
+
   public function getAllProps () {
     if (!!$this->props) {
       return $this->props;

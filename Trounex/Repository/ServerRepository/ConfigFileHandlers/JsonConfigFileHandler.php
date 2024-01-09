@@ -2,6 +2,8 @@
 
 namespace Trounex\Repository\ServerRepository\ConfigFileHandlers;
 
+use Trounex\Helper;
+
 trait JsonConfigFileHandler {
   /**
    * @method mixed

@@ -6,8 +6,9 @@ $utilsFileList = glob (__DIR__ . '/*.php');
 
 foreach ($utilsFileList as $utilFile) {
   $utilFilePath = realpath ($utilFile);
+  $includedFiles = get_included_files ();
 
-  if (__FILE__ !== $utilFilePath) {
+  if (!in_array ($utilFilePath, $includedFiles)) {
     @include_once ($utilFilePath);
   }
 }
