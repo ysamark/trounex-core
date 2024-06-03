@@ -49,8 +49,12 @@
     "rakit/validation": "dev-master",
     "ramsey/uuid": "4.2.3",
     "symfony/http-foundation": "5.4.x-dev",
-    "fusionspim/php-password-checker": "2.0.3",
     "php_modules/capsule": "dev-main",
     "php_modules/core": "dev-main"
+  },
+  "config": {
+    "allow-plugins": {
+      "kylekatarnls/update-helper": true
+    }
   }
 }
