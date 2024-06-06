@@ -20,6 +20,11 @@ trait MatchDynamicRoutesByRouteViewPaths {
       foreach ($routeViewPaths as $index => $routeViewPath) {
 
         if (@preg_match ($routeRe, $routeViewPath, $match)) {
+
+          if (((int)($index / 2) === $index) && !self::validateSameFileRef ($route ['originalFilePath'], $routeViewPath)) {
+            continue;
+          }
+
           array_push($dynamicRoutes, $route);
 
           if (preg_match (self::$routeVerbSuffixRe, $route ['originalFilePath'], $routeVerbSuffixMatch)) {
@@ -35,11 +40,25 @@ trait MatchDynamicRoutesByRouteViewPaths {
             ];
           }
 
-          break;
+          return $dynamicRoutes;
         }
       }
     }
 
-    return $dynamicRoutes;
+    return [];
+  }
+
+  protected static function validateSameFileRef (string $filePath) {
+    $fileName = pathinfo ($filePath, PATHINFO_FILENAME);
+
+    $args = array_slice (func_get_args (), 1, func_num_args ());
+
+    for ($i = 0; $i < count ($args); $i++) {
+      if (!(is_string ($args [$i]) && pathinfo ($args [$i], PATHINFO_FILENAME) === $fileName)) {
+        return false;
+      }
+    }
+
+    return true;
   }
 }

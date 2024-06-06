@@ -31,38 +31,25 @@
  * SOFTWARE.
  */
 
-if (!function_exists ('image')) {
-  function image () {
-    $imagePathPrefixes = [
-      '', 'uploads'
-    ];
+use App\Server;
+use Trounex\Helper;
+use App\Models\Language;
 
-    foreach ($imagePathPrefixes as $imagePathPrefix) {
-      $imagePath = join (DIRECTORY_SEPARATOR, [
-        App\Server::GetRootPath (),
-        'assets',
-        'images',
-        $imagePathPrefix,
-        join (DIRECTORY_SEPARATOR, func_get_args ())
-      ]);
+if (!function_exists ('default_language_data')) {
+  /**
+   * Get application default language data
+   * this should the configurations for the selected language
+   *
+   * @method array
+   *
+   */
+  function default_language_data () {
+    $clientLanguageFilePath = Server::getDefaultLanguageFilePath ();
 
-      $imagePath = realpath ($imagePath);
-
-      if (!empty ($imagePath) && is_file ($imagePath)) {
-        $imagePath = realpath ($imagePath);
-
-        $imageFileContent = file_get_contents ($imagePath);
-        $imageFileExtension = pathinfo ($imagePath, PATHINFO_EXTENSION);
-
-        if (in_array ($imageFileExtension, ['svg'])) {
-          $imageFileExtension = 'svg+xml';
-        }
-
-        return join (',', [
-          'data:image/'.$imageFileExtension.';base64',
-          base64_encode ($imageFileContent)
-        ]);
-      }
+    if (!empty ($clientLanguageFilePath) && is_file ($clientLanguageFilePath)) {
+      return Helper::ObjectsToArray (json_decode (file_get_contents ($clientLanguageFilePath)));
     }
+
+    return [];
   }
 }

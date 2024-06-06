@@ -31,37 +31,28 @@
  * SOFTWARE.
  */
 
-if (!function_exists ('image')) {
-  function image () {
-    $imagePathPrefixes = [
-      '', 'uploads'
-    ];
+use Trounex\Helpers\FileUploadHelper;
 
-    foreach ($imagePathPrefixes as $imagePathPrefix) {
-      $imagePath = join (DIRECTORY_SEPARATOR, [
-        App\Server::GetRootPath (),
-        'assets',
-        'images',
-        $imagePathPrefix,
-        join (DIRECTORY_SEPARATOR, func_get_args ())
-      ]);
+if (!function_exists ('delete_uploaded_file')) {
+  function delete_uploaded_file ($fileReference) {
+    if (is_string ($fileReference)) {
+      return FileUploadHelper::DeleteUploadedFile ($fileReference);
+    }
 
-      $imagePath = realpath ($imagePath);
+    if (!is_array ($fileReference)) {
+      throw new Exception ('DeleteUploadedFileError: first argument should be a string or an array');
+    }
 
-      if (!empty ($imagePath) && is_file ($imagePath)) {
-        $imagePath = realpath ($imagePath);
+    foreach ($fileReference as $property => $value) {
+      $valueType = gettype ($value);
 
-        $imageFileContent = file_get_contents ($imagePath);
-        $imageFileExtension = pathinfo ($imagePath, PATHINFO_EXTENSION);
-
-        if (in_array ($imageFileExtension, ['svg'])) {
-          $imageFileExtension = 'svg+xml';
-        }
-
-        return join (',', [
-          'data:image/'.$imageFileExtension.';base64',
-          base64_encode ($imageFileContent)
-        ]);
+      switch ($valueType) {
+        case 'string':
+          FileUploadHelper::DeleteUploadedFile ($value);
+          break;
+        case 'array':
+          delete_uploaded_file ($value);
+          break;
       }
     }
   }

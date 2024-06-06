@@ -30,27 +30,51 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-use Trounex\Auth;
+
 use Trounex\Helper;
-use Trounex\View\Partial;
 
-if (!function_exists ('partial')) {
-  function partial ($partialRelativePath) {
-    $args = func_num_args () >= 2 ? func_get_arg (1) : [];
+if (!function_exists ('get_layout_id')) {
+  /**
+   * @method string
+   *
+   * get rendering view layout id in the layout store cache
+   * it should register the layout in the store if that was not registered yet
+   */
+  function get_layout_id (string $layoutFilePath = null) {
+    $backTrace = debug_backtrace ();
 
-    if (!is_array ($args)) {
-      $args = [];
+    // $layoutFilePath = !empty ();
+
+    if (!(!empty ($layoutFilePath) && is_file ($layoutFilePath))) {
+      $layoutFilePath = Helper::getArrayProp ($backTrace, '1.file');
     }
 
-    $partialAbsolutePath = Partial::path ($partialRelativePath);
+    $layoutStoreCacheFilePath = join (DIRECTORY_SEPARATOR, [
+      conf ('paths.cachesPath'), 'layout-store-cache.json'
+    ]);
 
-    if (!empty ($partialAbsolutePath)) {
-      $renderFileArguments = [
-        $partialAbsolutePath,
-        $args
-      ];
+    if (!is_file ($layoutStoreCacheFilePath)) {
+      $fileHandle = fopen ($layoutStoreCacheFilePath, 'w');
+      $layoutFileId = generate_unique_id ();
 
-      return forward_static_call_array ([App\View::class, 'RenderFile'], $renderFileArguments);
+      fwrite ($fileHandle, json_encode ([$layoutFilePath => $layoutFileId]));
+
+      fclose ($fileHandle);
+
+      return $layoutFileId;
     }
+
+    $layoutStoreCache = Helper::readJsonFile ($layoutStoreCacheFilePath);
+
+    if (is_array ($layoutStoreCache)
+      && isset ($layoutStoreCache [$layoutFilePath])) {
+      return $layoutStoreCache [$layoutFilePath];
+    }
+
+    $layoutStoreCache [$layoutFilePath] = generate_unique_id ();
+
+    file_put_contents ($layoutStoreCacheFilePath, json_encode ($layoutStoreCache));
+
+    return $layoutStoreCache [$layoutFilePath];
   }
 }

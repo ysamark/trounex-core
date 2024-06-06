@@ -30,39 +30,19 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
+use App\Models\User;
 
-if (!function_exists ('image')) {
-  function image () {
-    $imagePathPrefixes = [
-      '', 'uploads'
-    ];
+if (!function_exists ('is_admin')) {
+  /**
+   * Get an input field default value and asign it
+   *
+   * @param string $inputRef
+   */
+  function is_admin (User $user = null) {
+    $user = is_null ($user) ? user () : $user;
 
-    foreach ($imagePathPrefixes as $imagePathPrefix) {
-      $imagePath = join (DIRECTORY_SEPARATOR, [
-        App\Server::GetRootPath (),
-        'assets',
-        'images',
-        $imagePathPrefix,
-        join (DIRECTORY_SEPARATOR, func_get_args ())
-      ]);
+    $role = role ($user->id);
 
-      $imagePath = realpath ($imagePath);
-
-      if (!empty ($imagePath) && is_file ($imagePath)) {
-        $imagePath = realpath ($imagePath);
-
-        $imageFileContent = file_get_contents ($imagePath);
-        $imageFileExtension = pathinfo ($imagePath, PATHINFO_EXTENSION);
-
-        if (in_array ($imageFileExtension, ['svg'])) {
-          $imageFileExtension = 'svg+xml';
-        }
-
-        return join (',', [
-          'data:image/'.$imageFileExtension.';base64',
-          base64_encode ($imageFileContent)
-        ]);
-      }
-    }
+    return (boolean)($role && preg_match ('/admin/i', $role->key));
   }
 }

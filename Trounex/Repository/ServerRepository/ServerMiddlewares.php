@@ -51,13 +51,39 @@ trait ServerMiddlewares {
         return call_user_func_array (self::lambda ($viewControllerInstance), self::defaultHandlerArguments ());
       } elseif (is_object ($viewControllerInstance) && method_exists ($viewControllerInstance, 'handler')) {
         self::$viewGlobalContext = $viewControllerInstance;
-        call_user_func_array ([$viewControllerInstance, 'handler'], self::defaultHandlerArguments ());
+        return call_user_func_array ([$viewControllerInstance, 'handler'], self::defaultHandlerArguments ());
+      }
+
+      $viewControllerRelativePath = self::getViewFileRelativePath ($viewControllerPath);
+      $viewControllerClassRef = preg_replace ('/((index)?\.controller\.php)$/i', '', $viewControllerRelativePath);
+      $viewControllerClassRef = self::rewriteRoutePathToClassRef ($viewControllerClassRef);
+      $viewControllerClassAbsoluteRef = join ('\\', [
+        'Views', $viewControllerClassRef
+      ]);
+
+      $viewControllerClassAbsoluteAlternatesRef = [
+        $viewControllerClassAbsoluteRef,
+        join ('', [$viewControllerClassAbsoluteRef, 'Controller'])
+      ];
+
+      foreach ($viewControllerClassAbsoluteAlternatesRef as $viewControllerClassAbsoluteAlternateRef) {
+        if (class_exists ($viewControllerClassAbsoluteAlternateRef)) {
+          $viewControllerInstance = new $viewControllerClassAbsoluteAlternateRef;
+
+          if (method_exists ($viewControllerInstance, 'handler')) {
+            return call_user_func_array ([$viewControllerInstance, 'handler'], self::defaultHandlerArguments ());
+          }
+        }
       }
     }
   }
 
   protected static function beforeRenderOrAPIHandler () {
     $viewPath = dirname (self::GetViewPath ());
+
+    $viewPaths = [
+      $viewPath
+    ];
 
     # Run middlewares
     # $middlewaresList = [];
@@ -66,6 +92,13 @@ trait ServerMiddlewares {
     $viewPathSlicesCount = count ($viewPathSlices);
 
     for ($i = 0; $i < $viewPathSlicesCount; $i++) {
+      $viewPath = dirname ($viewPath);
+      array_push ($viewPaths, $viewPath);
+    }
+
+    $viewPaths = array_reverse ($viewPaths);
+
+    foreach ($viewPaths as $viewPath) {
       $viewMiddlewarePaths = [
         pathinfo ($viewPath, PATHINFO_FILENAME) . '.middleware.php',
         '@middleware.php'
@@ -97,8 +130,6 @@ trait ServerMiddlewares {
           }
         }
       }
-
-      $viewPath = dirname ($viewPath);
     }
     # End
   }

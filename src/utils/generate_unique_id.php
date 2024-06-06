@@ -30,39 +30,17 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-
-if (!function_exists ('image')) {
-  function image () {
-    $imagePathPrefixes = [
-      '', 'uploads'
-    ];
-
-    foreach ($imagePathPrefixes as $imagePathPrefix) {
-      $imagePath = join (DIRECTORY_SEPARATOR, [
-        App\Server::GetRootPath (),
-        'assets',
-        'images',
-        $imagePathPrefix,
-        join (DIRECTORY_SEPARATOR, func_get_args ())
-      ]);
-
-      $imagePath = realpath ($imagePath);
-
-      if (!empty ($imagePath) && is_file ($imagePath)) {
-        $imagePath = realpath ($imagePath);
-
-        $imageFileContent = file_get_contents ($imagePath);
-        $imageFileExtension = pathinfo ($imagePath, PATHINFO_EXTENSION);
-
-        if (in_array ($imageFileExtension, ['svg'])) {
-          $imageFileExtension = 'svg+xml';
-        }
-
-        return join (',', [
-          'data:image/'.$imageFileExtension.';base64',
-          base64_encode ($imageFileContent)
-        ]);
-      }
-    }
+if (!function_exists ('generate_unique_id')) {
+  /**
+   * generate a unique slag by a list of registered slag and a given title/name (data)
+   */
+  function generate_unique_id () {
+    return join ('', [
+      '1000',
+      str_repeat ('0', rand (1, 6)),
+      rand (99, 99999),
+      time (),
+      date ('iHsYmd')
+    ]);
   }
 }

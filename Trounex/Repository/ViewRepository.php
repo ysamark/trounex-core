@@ -23,6 +23,7 @@ trait ViewRepository {
    * Render the requested view according to the page route
    *
    * @return void
+   *
    */
   public static function Render () {
     $viewHandler = ViewHandlerStack::pop ();
@@ -31,10 +32,30 @@ trait ViewRepository {
       $viewHandlerProps = [
       ];
 
-      return call_user_func_array ($viewHandler, [$viewHandlerProps]);
+      call_user_func_array ($viewHandler, [$viewHandlerProps]);
+
+      return;
     }
 
-    call_user_func_array (Server::lambda (function ($viewPath = null) {
+    forward_static_call_array ([self::class, 'RenderFile'], func_get_args ());
+  }
+
+  /**
+   * Render a given view file by path
+   * if sent path is null, render the requested path view path
+   *
+   * @param string $viewPath
+   *
+   */
+  public static function RenderFile ($viewPath = null) {
+    $args = func_num_args () >= 2 ? func_get_arg (1) : [];
+
+    if (!is_array ($args)) {
+      $args = [];
+    }
+
+    $renderScope = Server::lambda (function ($viewPath = null) use ($args) {
+      $variableNameRe = '/^([a-zA-Z0-9_]+)$/';
       $vars = get_object_vars ($this);
 
       if (BaseController::isControllerInstance ($this)) {
@@ -45,8 +66,14 @@ trait ViewRepository {
         $varName = is_array ($var) ? $var ['name'] : $key;
         $value = is_array ($var) ? $var ['value'] : $vars [$key];
 
-        if (preg_match ('/^([a-zA-Z0-9_]+)$/', $varName)) {
+        if (preg_match ($variableNameRe, $varName)) {
           $$varName = $value;
+        }
+      }
+
+      foreach ($args as $argumentName => $argumentValue) {
+        if (preg_match ($variableNameRe, $argumentName)) {
+          $$argumentName = $argumentValue;
         }
       }
 
@@ -54,9 +81,9 @@ trait ViewRepository {
         $viewPath = Server::GetViewPath ();
       }
 
-      $args = func_get_args ();
-
       include ($viewPath);
-    }), func_get_args ());
+    });
+
+    call_user_func_array ($renderScope, [$viewPath]);
   }
 }

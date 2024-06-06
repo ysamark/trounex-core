@@ -32,7 +32,7 @@
  */
 
 if (!function_exists ('icon')) {
-  function icon (string $iconName) {
+  function icon (string $iconName, string $color = 'currentColor') {
     $iconsSetRe = '/^@?(fa|ion)-/';
     $appRootDir = App\Server::GetRootPath ();
 
@@ -143,7 +143,14 @@ if (!function_exists ('icon')) {
       }
 
       if (is_file ($iconFilePath)) {
-        return file_get_contents ($iconFilePath);
+        $re = '/^<svg\s+/i';
+        $iconFileContent = file_get_contents ($iconFilePath);
+
+        if (!empty ($color) && preg_match ($re, $iconFileContent)) {
+          $iconFileContent = preg_replace ($re, "<svg fill=\"$color\" ", $iconFileContent);
+        }
+
+        return $iconFileContent;
       }
     }
   }

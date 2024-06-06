@@ -83,7 +83,7 @@ class Unique extends Rule {
         ]);
 
         if (!is_null ($modelPropPath)) {
-          $lines->where ($modelPropPath, '!=', $modelPropValue);
+          $lines->where ('id', '!=', $modelPropValue);
         }
 
         return (boolean)($lines->count () < 1);

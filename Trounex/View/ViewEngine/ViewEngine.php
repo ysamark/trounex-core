@@ -2,6 +2,7 @@
 
 namespace Trounex\View\ViewEngine;
 
+use Trounex\Helper;
 use Trounex\View\ViewGlobalContext;
 
 abstract class ViewEngine {
@@ -28,6 +29,10 @@ abstract class ViewEngine {
 
   public function __isset (string $property) {
     return ($this->props && isset ($this->props [$property]));
+  }
+
+  public function getProp (string $propertyPath) {
+    return Helper::getArrayProp ($this->props, $propertyPath);
   }
 
   public function updateLayoutFilePath ($layoutFilePath) {

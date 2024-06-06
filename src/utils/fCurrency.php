@@ -39,9 +39,8 @@ if (!function_exists ('fCurrency')) {
           continue;
         }
 
-        array_push ($fetchedArgsIndexes, $i);
-
         if (call_user_func ($argFilter, $args[$i])) {
+          array_push ($fetchedArgsIndexes, $i);
           return $args[$i];
         }
       }
@@ -67,7 +66,7 @@ if (!function_exists ('fCurrency')) {
     }
 
     if (strlen ($decimalPlaces) >= $decimalPlacesLen) {
-      $decimalPlacesChars = call_user_func ($strChars, $decimalPlaces);
+      $decimalPlacesChars = call_user_func ($strChars, (string)$decimalPlaces);
 
       $decimalPlaces = join ('', array_slice ($decimalPlacesChars, 0, $decimalPlacesLen));
     } else {
@@ -92,8 +91,8 @@ if (!function_exists ('fCurrency')) {
 
     return (string)(
       (!$currencyAtTheEnd ? "$currency " : '')
-      . (count ($amountValue) >= 1 ? join ('', $amountValue) . '.' : '')
-      . join ('.', array_reverse ($trios))
+      . (count ($amountValue) >= 1 ? join ('', $amountValue) . ((count ($trios) >= 1) ? '.' : '') : '')
+      . (count ($trios) >= 1 ? join ('.', array_reverse ($trios)) : '')
       . (!empty ($decimalPlaces) ? join ('', [',', $decimalPlaces]) : '')
       . ($currencyAtTheEnd ? " $currency" : '')
     );

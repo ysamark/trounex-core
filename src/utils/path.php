@@ -56,7 +56,7 @@ if (!function_exists ('path')) {
     }
 
     $path = join ('/', $pathList);
-    $initialDotRe = '/^\.(\/)[^\.]/';
+    $initialDotRe = '/^\\.(\/)/';
 
     if (preg_match ($initialDotRe, $path)) {
       $path = preg_replace ($initialDotRe, '', $path);

@@ -74,6 +74,34 @@ trait ServerUtils {
 
   /**
    * @method string
+   *
+   * get a file path relative to a parent directory
+   *
+   */
+  public static function getFileRelativePath (string $filePath, string $parentPath) {
+    $parentPathRe = join ('', [
+      '/^(', self::path2regex ($parentPath), ')\\\(.+)/'
+    ]);
+
+    if (@preg_match ($parentPathRe, $filePath, $match)) {
+      return trim ($match [2]);
+    }
+
+    return null;
+  }
+
+  /**
+   * @method string
+   *
+   * get a file path relative to the views directory
+   *
+   */
+  public static function getViewFileRelativePath (string $filePath) {
+    return self::getFileRelativePath ($filePath, self::GetViewsPath ());
+  }
+
+  /**
+   * @method string
    */
   protected static function stripRouteVerb ($string) {
     return preg_replace ('/\.(get|post|put|patch|delete|options|head)$/i', '', $string);
@@ -131,9 +159,53 @@ trait ServerUtils {
     return join (DIRECTORY_SEPARATOR, [Server::GetLayoutsPath (), 'app.php']);
   }
 
+  public static function getLayoutParents (string $layoutPath) {
+    $layoutParents = [];
+
+    $layoutPathSlices = preg_split ('/(\\\|\\/)/', $layoutPath);
+    $layoutPathSlicesCount = count ($layoutPathSlices);
+
+    for ($i = 0; $i < $layoutPathSlicesCount; $i++) {
+      $layoutParent = self::getLayoutParent ($layoutPath);
+
+      array_push ($layoutParents, $layoutParent);
+
+      if (self::isRootLayout ($layoutParent) || !is_file ($layoutParent)) {
+        break;
+      }
+
+      $layoutPath = $layoutParent;
+    }
+
+    return $layoutParents;
+  }
+
   public static function isRootLayout (string $layoutPath) {
     $rootLayoutPath = realpath (join (DIRECTORY_SEPARATOR, [self::GetLayoutsPath (), 'app.php']));
 
     return (boolean)(realpath ($layoutPath) === $rootLayoutPath);
+  }
+
+  protected static function resolveLanguageFilePath (string $languageKey) {
+    $languagesPath = join (DIRECTORY_SEPARATOR, [
+      conf ('paths.rootDir'), 'config', 'languages'
+    ]);
+
+    $languageFilePath = join (DIRECTORY_SEPARATOR, [
+      $languagesPath, "{$languageKey}.json"
+    ]);
+
+    if (is_file ($languageFilePath)) {
+      return realpath ($languageFilePath);
+    }
+  }
+
+  /**
+   * Sanitize a given path string
+   */
+  protected static function sanitizePathStr ($pathStr) {
+    return preg_replace_callback ('/[\/\\\\.]/', function ($match) {
+      return '\\' . $match [0];
+    }, $pathStr);
   }
 }

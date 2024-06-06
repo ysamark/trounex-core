@@ -31,38 +31,49 @@
  * SOFTWARE.
  */
 
-if (!function_exists ('image')) {
-  function image () {
-    $imagePathPrefixes = [
-      '', 'uploads'
+if (!function_exists ('resolve_image_file_extension')) {
+  /**
+   * Resolve a referenced image file extension
+   */
+  function resolve_image_file_extension (string $imageFilePath) {
+    $resolveExtensionByPath = (function ($path) {
+      return pathinfo ($path, PATHINFO_EXTENSION);
+    });
+
+    if (!is_file ($imageFilePath)) {
+      return call_user_func ($resolveExtensionByPath, $imageFilePath);
+    }
+
+    $imageType = exif_imagetype ($imageFilePath);
+
+    $imageExtensionsMap = [
+      // 2 => 'jpeg'
+      IMAGETYPE_GIF => 'GIF',
+      IMAGETYPE_JPEG => 'JPEG',
+      IMAGETYPE_PNG => 'PNG',
+      IMAGETYPE_SWF => 'SWF',
+      IMAGETYPE_PSD => 'PSD',
+      IMAGETYPE_BMP => 'BMP',
+      IMAGETYPE_TIFF_II => 'TIFF_II',
+      IMAGETYPE_TIFF_MM => 'TIFF_MM',
+      IMAGETYPE_JPC => 'JPC',
+      IMAGETYPE_JP2 => 'JP2',
+      IMAGETYPE_JPX => 'JPX',
+      IMAGETYPE_JB2 => 'JB2',
+      IMAGETYPE_SWC => 'SWC',
+      IMAGETYPE_IFF => 'IFF',
+      IMAGETYPE_WBMP => 'WBMP',
+      IMAGETYPE_XBM => 'XBM',
+      IMAGETYPE_ICO => 'ICO',
+      IMAGETYPE_WEBP => 'WEBP',
+      // IMAGETYPE_AVIF => 'AVIF',
     ];
 
-    foreach ($imagePathPrefixes as $imagePathPrefix) {
-      $imagePath = join (DIRECTORY_SEPARATOR, [
-        App\Server::GetRootPath (),
-        'assets',
-        'images',
-        $imagePathPrefix,
-        join (DIRECTORY_SEPARATOR, func_get_args ())
-      ]);
-
-      $imagePath = realpath ($imagePath);
-
-      if (!empty ($imagePath) && is_file ($imagePath)) {
-        $imagePath = realpath ($imagePath);
-
-        $imageFileContent = file_get_contents ($imagePath);
-        $imageFileExtension = pathinfo ($imagePath, PATHINFO_EXTENSION);
-
-        if (in_array ($imageFileExtension, ['svg'])) {
-          $imageFileExtension = 'svg+xml';
-        }
-
-        return join (',', [
-          'data:image/'.$imageFileExtension.';base64',
-          base64_encode ($imageFileContent)
-        ]);
-      }
+    if (!(is_numeric ($imageType)
+      && in_array ($imageType, array_keys ($imageExtensionsMap)))) {
+      return null;
     }
+
+    return strtolower ($imageExtensionsMap [$imageType]);
   }
 }

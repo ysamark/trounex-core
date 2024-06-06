@@ -6,10 +6,38 @@ use Trounex\RouteData;
 use App\Utils\PageExceptions\Error;
 
 trait ApiRouteHandler {
+  /**
+   * @method string
+   *
+   * rewrite whole the route paths to valid class reference~
+   *
+   */
+  protected static function rewriteRoutePathToClassRef (string $routePath) {
+    $routePathSlices = preg_split ('/(\/|\\\)+/', $routePath);
+
+    $routePathSlicesMapper = (function ($routePathSlice) {
+      $routerContextRe = '/^(\((.+)\))$/';
+
+      $anyToCamelCase = (function ($str) {
+        $replacer = (function ($match) {
+          return strtoupper ($match [2]);
+        });
+
+        return preg_replace_callback ('/(\-|\.|@|\$)+(.)/', $replacer, ucfirst ($str));
+      });
+
+      if (preg_match ($routerContextRe, $routePathSlice, $match)) {
+        return call_user_func ($anyToCamelCase, trim ($match [2]));
+      }
+
+      return call_user_func ($anyToCamelCase, $routePathSlice);
+    });
+
+    return join ('\\', array_map ($routePathSlicesMapper, $routePathSlices));
+  }
+
   protected static function handleApiRoute ($routePath, $apiSourcePath) {
-    $apiSourceClassPath = join ('\\', [
-      preg_replace ('/\/+/', '\\', $routePath)
-    ]);
+    $apiSourceClassPath = self::rewriteRoutePathToClassRef ($routePath);
 
     $actionMethod = 'handler';
 

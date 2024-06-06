@@ -34,4 +34,14 @@ trait ParamRepository {
       self::$paramMapList = array_merge (self::$paramMapList, $paramMapList);
     }
   }
+
+  /**
+   * @method array
+   *
+   * return all the request parameters
+   *
+   */
+  public static function all () {
+    return self::$paramMapList;
+  }
 }

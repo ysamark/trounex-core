@@ -239,7 +239,8 @@ class Auth {
           'expires' => join ('', [date ('H:i:s Y/m/'), $fiveDaysAfter])
         ]);
 
-        setcookie(self::getAuthCookieName (), $authTokenData, time() + self::TOKEN_COOKIE_EXPIRE_TIME, '/', (Server::isHttps () ? null : Server::Get ('name')), true, true);
+        // setcookie(self::getAuthCookieName (), $authTokenData, time() + self::TOKEN_COOKIE_EXPIRE_TIME, '/', (Server::isHttps () ? null : Server::Get ('name')), true, true);
+        Cookie::set ('auth', $authTokenData);
 
         return [
           'type' => 'success',
@@ -254,6 +255,47 @@ class Auth {
         'message' => 'wrong-password'
       ];
     }
+  }
+
+  /**
+   * @method void
+   *
+   * undo user authentication, remove user authentication data from session and cookie storage
+   *
+   */
+  public static function undo ($redirect = false) {
+    $authCookieName = self::getAuthCookieName ();
+
+    $_SESSION ['user'] = ['id' => null];
+    setcookie ($authCookieName, '.', time() + self::TOKEN_COOKIE_EXPIRE_TIME, '/', (Server::isHttps () ? null : Server::Get ('name')), true, true);
+
+    $redirectFunctionName = is_bool ($redirect)
+      ? 'redirect_back'
+      : 'redirect_to';
+
+    if ($redirect) {
+      return call_user_func_array ($redirectFunctionName, func_get_args ());
+    }
+  }
+
+  /**
+   * @method void
+   *
+   * undo user authentication, remove user authentication data from session and cookie storage
+   *
+   */
+  public static function unAuthenticate () {
+    return forward_static_call_array ([self::class, 'undo'], func_get_args ());
+  }
+
+  /**
+   * @method mixed
+   *
+   * attempt to login by given user credentials
+   *
+   */
+  public static function authenticate () {
+    return forward_static_call_array ([self::class, 'attempt'], func_get_args ());
   }
 
   /**

@@ -31,38 +31,34 @@
  * SOFTWARE.
  */
 
-if (!function_exists ('image')) {
-  function image () {
-    $imagePathPrefixes = [
-      '', 'uploads'
-    ];
+use App\Models\Language;
+use Illuminate\Database\Eloquent\Relations\MorphMany;
 
-    foreach ($imagePathPrefixes as $imagePathPrefix) {
-      $imagePath = join (DIRECTORY_SEPARATOR, [
-        App\Server::GetRootPath (),
-        'assets',
-        'images',
-        $imagePathPrefix,
-        join (DIRECTORY_SEPARATOR, func_get_args ())
-      ]);
+if (!function_exists ('language_data')) {
+  /**
+   * Get application language data
+   * this should the configurations for the selected language
+   *
+   * @method array
+   *
+   */
+  function language_data (Language $language) {
+    if (!method_exists ($language, 'settings')) {
+      return;
+    }
 
-      $imagePath = realpath ($imagePath);
+    $languageSettingsContext = $language->settings ();
 
-      if (!empty ($imagePath) && is_file ($imagePath)) {
-        $imagePath = realpath ($imagePath);
+    if ($languageSettingsContext instanceof MorphMany) {
+      $languageSettings =  $languageSettingsContext->get ();
 
-        $imageFileContent = file_get_contents ($imagePath);
-        $imageFileExtension = pathinfo ($imagePath, PATHINFO_EXTENSION);
+      $languageData = [];
 
-        if (in_array ($imageFileExtension, ['svg'])) {
-          $imageFileExtension = 'svg+xml';
-        }
-
-        return join (',', [
-          'data:image/'.$imageFileExtension.';base64',
-          base64_encode ($imageFileContent)
-        ]);
+      foreach ($languageSettings as $setting) {
+        $languageData [strtolower ($setting->property)] = $setting->value;
       }
+
+      return key_path_map_to_array ($languageData);
     }
   }
 }

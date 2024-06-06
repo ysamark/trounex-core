@@ -10,11 +10,13 @@ class Helper {
    */
   public static function ObjectsToArray ($data) {
     if (!is_array ($data)) {
-      return is_object ($data) ? (array)($data) : $data;
+      $data = is_object ($data) ? (array)($data) : $data;
     }
 
-    foreach ($data as $key => $value) {
-      $data [ $key ] = self::ObjectsToArray ($value);
+    if (is_array ($data)) {
+      foreach ($data as $key => $value) {
+        $data [ $key ] = self::ObjectsToArray ($value);
+      }
     }
 
     return $data;
@@ -156,5 +158,35 @@ class Helper {
     }
 
     return $defaultValue;
+  }
+
+  public static function readJsonFile (string $configFile) {
+    if (is_file ($configFile)) {
+      $configFileContent = file_get_contents ($configFile);
+
+      $configFileData = @json_decode (trim ($configFileContent));
+
+      return Helper::ObjectsToArray ($configFileData);
+    }
+  }
+
+  public static function stringify ($data) {
+    switch (gettype ($data)) {
+      case 'array':
+        return json_encode ($data);
+
+      case 'object':
+        if (method_exists ($data, '__toString')) {
+          return call_user_func ([$data, '__toString']);
+        }
+
+        return json_encode ($data);
+
+      case 'boolean':
+        return $data ? 'true' : 'false';
+
+      default:
+        return (string)($data);
+    }
   }
 }

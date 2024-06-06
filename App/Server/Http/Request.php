@@ -35,7 +35,7 @@ class Request extends RequestBase {
 
     $requestData = (isset ($requestInput [$firstKeySlice]))
       ? $requestInput [$firstKeySlice]
-      : call_user_func_array ([parent::class, 'get'], [$firstKeySlice, $defaultValue]);
+      : parent::get ($firstKeySlice, $defaultValue);
 
     if (count ($keySlices) < 2) {
       return $requestData;
@@ -72,6 +72,32 @@ class Request extends RequestBase {
     $requestInput = $this->getRequestInput ();
 
     return array_full_merge ($this->request->all (), $requestInput);
+  }
+
+  /**
+   * @method mixed
+   * 
+   * get data from query request params
+   * 
+   */
+  public function query ($propRef) {
+    if (is_string ($propRef)) {
+      return $this->query->get ($propRef);
+    }
+
+    if (is_array ($propRef)) {
+      $propRef = array_filter ($propRef, function ($prop) {
+        return is_string ($prop);
+      });
+
+      $queryProps = [];
+
+      foreach ($propRef as $prop) {
+        $queryProps [$prop] = $this->query->get ($prop);
+      }
+
+      return $queryProps;
+    }
   }
 
   /**

@@ -11,9 +11,23 @@ trait ServerGetters {
       'port' => 'SERVER_PORT'
     ];
 
+    $dataContextRe = '/^((cookie|session):(.+))$/i';
+
+    if (preg_match ($dataContextRe, $propertyKey, $dataContextMatch)) {
+      $dataContext = ucfirst ($dataContextMatch [2]);
+      $dataContextGetterName = "Get$dataContext";
+      $dataPropertyKey = trim ($dataContextMatch [2]);
+
+      if (method_exists (self::class, $dataContextGetterName)) {
+        return forward_static_call_array ([self::class, $dataContextGetterName], [$dataPropertyKey]);
+      }
+
+      return;
+    }
+
     $propertyKeyAlternates = [
       $propertyKey,
-      strtoupper ('$propertyKey'),
+      strtoupper ($propertyKey),
       join ('_', ['SERVER', strtoupper ($propertyKey)]),
       join ('_', ['REQUEST', strtoupper ($propertyKey)])
     ];
@@ -33,6 +47,26 @@ trait ServerGetters {
         return $_SERVER [$property];
       }
     }
+  }
+
+  /**
+   * @method mixed
+   *
+   * get a cookie data
+   *
+   */
+  public static function GetCookie (string $cookieName) {
+    return (isset ($_COOKIE [$cookieName])) ? $_COOKIE [$cookieName] : null;
+  }
+
+  /**
+   * @method mixed
+   *
+   * get a session data
+   *
+   */
+  public static function GetSession (string $cookieName) {
+    return (isset ($_SESSION) && isset ($_SESSION [$cookieName])) ? $_SESSION [$cookieName] : null;
   }
 
   /**

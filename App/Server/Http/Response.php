@@ -20,7 +20,16 @@ class Response extends ResponseBase {
    * end a response
    *
    */
-  public function end () {
+  public function end ($data = null) {
+    if (!!($data) && !(is_array ($data) || is_object ($data))) {
+      $data = [ 'data' => $data ];
+    }
+
+    if (!!$data) {
+      $this->json ($data);
+    }
+
+    exit (0);
   }
 
   /**

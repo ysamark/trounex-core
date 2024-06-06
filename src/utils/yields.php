@@ -31,10 +31,13 @@
  * SOFTWARE.
  */
 
-use App\View;
-
 if (!function_exists ('yields')) {
   function yields () {
-    return View::Yields ();
+?>
+  <div data-trounex-layout-open="<?= get_layout_id () ?>"></div>
+  <?= App\Render () ?>
+  <div data-trounex-layout-close="<?= get_layout_id () ?>"></div>
+<?php
   }
 }
+?>

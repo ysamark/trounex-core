@@ -41,7 +41,7 @@ class Image extends Rule {
     $imageExtensionsMap = [
       // 2 => 'jpeg'
       IMAGETYPE_GIF => 'GIF',
-      IMAGETYPE_JPEG => 'JPEG',
+      IMAGETYPE_JPEG => 'JPG',
       IMAGETYPE_PNG => 'PNG',
       IMAGETYPE_SWF => 'SWF',
       IMAGETYPE_PSD => 'PSD',
@@ -58,7 +58,7 @@ class Image extends Rule {
       IMAGETYPE_XBM => 'XBM',
       IMAGETYPE_ICO => 'ICO',
       IMAGETYPE_WEBP => 'WEBP',
-      IMAGETYPE_AVIF => 'AVIF',
+      // IMAGETYPE_AVIF => 'AVIF',
     ];
 
     $imageTypeName = isset ($imageExtensionsMap [$imageType]) ? $imageExtensionsMap [$imageType] : null;

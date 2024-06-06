@@ -30,39 +30,53 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
+if (!function_exists ('key_path_map_to_array')) {
+  /**
+   * @method array
+   *
+   * rewrites a given array from the path by a given pattern array nested keys array
+   *
+   * @param array $array
+   *
+   * The array to rewrite
+   *
+   * @param string $separator
+   *
+   * key path separator regular expression
+   *
+   */
+  function key_path_map_to_array (array $array, string $separator = '\\.') {
+    $newArray = [];
 
-if (!function_exists ('image')) {
-  function image () {
-    $imagePathPrefixes = [
-      '', 'uploads'
-    ];
-
-    foreach ($imagePathPrefixes as $imagePathPrefix) {
-      $imagePath = join (DIRECTORY_SEPARATOR, [
-        App\Server::GetRootPath (),
-        'assets',
-        'images',
-        $imagePathPrefix,
-        join (DIRECTORY_SEPARATOR, func_get_args ())
-      ]);
-
-      $imagePath = realpath ($imagePath);
-
-      if (!empty ($imagePath) && is_file ($imagePath)) {
-        $imagePath = realpath ($imagePath);
-
-        $imageFileContent = file_get_contents ($imagePath);
-        $imageFileExtension = pathinfo ($imagePath, PATHINFO_EXTENSION);
-
-        if (in_array ($imageFileExtension, ['svg'])) {
-          $imageFileExtension = 'svg+xml';
-        }
-
-        return join (',', [
-          'data:image/'.$imageFileExtension.';base64',
-          base64_encode ($imageFileContent)
-        ]);
+    foreach ($array as $key => $value) {
+      if (!is_string ($key)) {
+        $newArray [$key] = $value;
+        continue;
       }
+
+      $keySlices = @preg_split ("/($separator)/", $key);
+
+      if (!is_array ($keySlices)) {
+        continue;
+      }
+
+      $keyArray = $value;
+
+      $i = -1 + count ($keySlices);
+
+      for ( ; $i >= 1; $i--) {
+        $keySlice = $keySlices [$i];
+
+        if (!empty ($keySlice)) {
+          $keyArray = [$keySlice => $keyArray];
+        }
+      }
+
+      $keyArray = [$keySlices [0] => $keyArray];
+
+      $newArray = array_full_merge ($newArray, $keyArray);
     }
+
+    return $newArray;
   }
 }
