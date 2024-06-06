@@ -18,7 +18,8 @@
       "App\\": "App/"
     },
     "files": [
-      "autoload.php"
+      "autoload.php",
+      "src/utils/index.php"
     ]
   },
   "homepage": "https://github.com/ysamark/trounex",
