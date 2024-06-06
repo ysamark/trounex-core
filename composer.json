@@ -19,7 +19,8 @@
     },
     "files": [
       "autoload.php",
-      "src/utils/index.php"
+      "src/utils/index.php",
+      "src/setups/index.php"
     ]
   },
   "homepage": "https://github.com/ysamark/trounex",
