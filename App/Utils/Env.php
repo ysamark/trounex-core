@@ -64,10 +64,12 @@ final class Env {
    * @method void
    */
   protected static function loadEnvBasedConfigFile (array $envBasedConfigFile) {
-    call_user_func_array ([new Dotenv, 'overload'], $envBasedConfigFile);
+    if (is_array ($envBasedConfigFile) && count ($envBasedConfigFile) >= 1) {
+      call_user_func_array ([new Dotenv, 'overload'], $envBasedConfigFile);
 
-    if (!self::$dotEnvLoaded) {
-      self::$dotEnvLoaded = true;
+      if (!self::$dotEnvLoaded) {
+        self::$dotEnvLoaded = true;
+      }
     }
   }
 
