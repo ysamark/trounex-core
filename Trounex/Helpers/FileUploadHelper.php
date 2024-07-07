@@ -34,10 +34,11 @@ class FileUploadHelper {
    * @method mixed
    */
   public static function UploadFile (array $fileData) {
+    $clientDeviceId = get_client_device_id ();
     $fileName = self::generateFileNameIfNull ($fileData);
 
     $fileAbsolutePath = join (DIRECTORY_SEPARATOR, [
-      conf('paths.tmpUploadsPath'), $fileName
+      conf('paths.tmpUploadsPath'), "$fileName.$clientDeviceId"
     ]);
 
     $props = [
