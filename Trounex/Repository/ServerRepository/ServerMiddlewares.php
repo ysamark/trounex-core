@@ -13,26 +13,31 @@ trait ServerMiddlewares {
 
     $fieldSources = isset ($_POST ['_source']) ? $_POST ['_source'] : [];
 
-    if (isset ($_FILES) && $_FILES) {
-      $pairedFileFieldProperties = [];
+    if (isset ($_FILES) && $_FILES && count ($_FILES) >= 1) {
+      $formDataFileInput = read_form_data_file_input ($_FILES);
 
-      foreach ($_FILES as $fileFieldProperty => $fileData) {
+      $_POST = array_full_merge ($_POST, $formDataFileInput);
+      // $pairedFileFieldProperties = [];
 
-        foreach ($fieldSources as $fieldSourceKey => $fieldSourceValue) {
-          if (strtolower ($fileFieldProperty) === strtolower ($fieldSourceValue)) {
-            array_push ($pairedFileFieldProperties, $fileFieldProperty);
+      // foreach ($_FILES as $fileFieldProperty => $fileData) {
 
-            self::processFileField ($fileFieldProperty, $fileData, $fieldSourceKey);
-          }
-        }
+      //   foreach ($fieldSources as $fieldSourceKey => $fieldSourceValue) {
+      //     if (strtolower ($fileFieldProperty) === strtolower ($fieldSourceValue)) {
+      //       array_push ($pairedFileFieldProperties, $fileFieldProperty);
 
-        if (!in_array ($fileFieldProperty, $pairedFileFieldProperties)) {
-          $fieldSourceKey = preg_replace ('/\-+/', '.', $fileFieldProperty);
+      //       self::processFileField ($fileFieldProperty, $fileData, $fieldSourceKey);
+      //     }
+      //   }
 
-          self::processFileField ($fileFieldProperty, $fileData, $fieldSourceKey);
-        }
-      }
+      //   if (!in_array ($fileFieldProperty, $pairedFileFieldProperties)) {
+      //     $fieldSourceKey = preg_replace ('/\-+/', '.', $fileFieldProperty);
+
+      //     self::processFileField ($fileFieldProperty, $fileData, $fieldSourceKey);
+      //   }
+      // }
     }
+
+    $_SESSION ['_post'] = $_POST;
   }
 
   protected static function beforeRender () {
