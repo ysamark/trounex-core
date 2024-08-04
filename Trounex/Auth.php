@@ -46,6 +46,7 @@ class Auth {
    */
   use Auth\Config;
   use Auth\Encrypt;
+  use Auth\TokenSourceReader;
   /**
    *
    * @var array
@@ -305,31 +306,11 @@ class Auth {
    *
    */
   public static function authenticated () {
-    $userId = null;
+    $userId = self::getUserIdFromAuthData ();
     $User = self::getConf ('models.user.name');
 
     if (!self::validModelRef ($User)) {
       return;
-    }
-
-    if (isset ($_SESSION)
-      && is_array ($_SESSION)
-      && isset ($_SESSION ['user'])
-      && is_array ($_SESSION ['user'])
-      && isset ($_SESSION ['user']['userId'])) {
-      $userId = $_SESSION ['user']['userId'];
-    }
-
-    if (is_null ($userId)
-      && isset ($_COOKIE)
-      && is_array ($_COOKIE)
-      && isset ($_COOKIE [self::getAuthCookieName ()])
-      && !empty ($_COOKIE [self::getAuthCookieName ()])) {
-      $decryptedToken = self::decryptToken ($_COOKIE [self::getAuthCookieName ()]);
-
-      if ($decryptedToken && self::validTokenData ($decryptedToken)) {
-        $userId = $decryptedToken ['userId'];
-      }
     }
 
     $userFetch = $User::where ([ 'id' => $userId ]);
