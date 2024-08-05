@@ -54,19 +54,19 @@ trait RequestInput {
   }
 
   private static function jsonObject2Array ($object) {
-    if (!(is_object ($object))) {
+    if (!(is_object ($object) || is_array ($object))) {
       return $object;
     }
 
-    $object = ((array)($object));
-    $ob = [];
+    $arrayFromObject = ((array)($object));
+    $newArray = [];
 
-    foreach ($object as $k => $v) {
-      $ob[ $k ] = self::jsonObject2Array ( $v );
+    foreach ($arrayFromObject as $key => $value) {
+      $newArray [$key] = self::jsonObject2Array ($value);
     }
 
-    return is_array ($ob) ? $ob : (
-      ((array)( $ob ))
+    return is_array ($newArray) ? $newArray : (
+      ((array)($newArray))
     );
   }
 
