@@ -34,12 +34,23 @@ use Trounex\Cookie;
 
 if (!function_exists ('get_client_device_id')) {
   function get_client_device_id () {
-    $clientDeviceId = Cookie::get ('client-device-id');
+    $headers = getallheaders ();
+    $clientDeviceIdCookie = Cookie::get ('client-device-id');
+
+    $clientDeviceIdHeader = isset ($headers ['X-Client-Device-Id'])
+      ? $headers ['X-Client-Device-Id']
+      : null;
+
+    $clientDeviceId = !empty ($clientDeviceIdCookie)
+      ? $clientDeviceIdCookie
+      : $clientDeviceIdHeader;
 
     if (empty ($clientDeviceId)) {
-      $clientDeviceId = uuid ();
+      $clientDeviceId = join ('.', [generate_unique_id (), uuid ()]);
 
       Cookie::set ('client-device-id', $clientDeviceId);
+
+      @header ("X-Client-Device-Id $clientDevice");
     }
 
     return $clientDeviceId;
