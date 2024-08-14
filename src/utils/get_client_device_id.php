@@ -49,9 +49,9 @@ if (!function_exists ('get_client_device_id')) {
       $clientDeviceId = join ('.', [generate_unique_id (), uuid ()]);
 
       Cookie::set ('client-device-id', $clientDeviceId);
-
-      @header ("X-Client-Device-Id $clientDevice");
     }
+
+    @header ("X-Client-Device-Id $clientDeviceId");
 
     return $clientDeviceId;
   }
