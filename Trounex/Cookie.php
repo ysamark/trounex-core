@@ -42,7 +42,7 @@ class Cookie {
 
     $cookieValue = Helper::stringify ($cookieValue);
 
-    setcookie (
+    @setcookie (
       $cookieName,
       $cookieValue,
       $cookieExpireTime,
